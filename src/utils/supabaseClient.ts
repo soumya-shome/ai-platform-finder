@@ -1,5 +1,5 @@
 
-import { Platform, Review } from '@/types/supabase';
+import { Platform, Review, DbPlatform, DbReview, convertDbPlatformToPlatform, convertReviewToDbReview, convertDbReviewToReview } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Export searchPlatformsDatabase function 
@@ -16,7 +16,7 @@ export const getPlatforms = async (): Promise<Platform[]> => {
     throw error;
   }
   
-  return data || [];
+  return data ? data.map(convertDbPlatformToPlatform) : [];
 };
 
 export const getPlatformById = async (id: string): Promise<Platform | null> => {
@@ -31,7 +31,7 @@ export const getPlatformById = async (id: string): Promise<Platform | null> => {
     return null;
   }
   
-  return data;
+  return data ? convertDbPlatformToPlatform(data) : null;
 };
 
 export const getPlatformsByTag = async (tag: string): Promise<Platform[]> => {
@@ -45,7 +45,7 @@ export const getPlatformsByTag = async (tag: string): Promise<Platform[]> => {
     return [];
   }
   
-  return data || [];
+  return data ? data.map(convertDbPlatformToPlatform) : [];
 };
 
 export const getAllTags = async (): Promise<string[]> => {
@@ -71,26 +71,29 @@ export const getReviewsByPlatformId = async (platformId: string): Promise<Review
   const { data, error } = await supabase
     .from('reviews')
     .select('*')
-    .eq('platformId', platformId);
+    .eq('platformid', platformId);
   
   if (error) {
     console.error(`Error fetching reviews for platform ${platformId}:`, error);
     return [];
   }
   
-  return data || [];
+  return data ? data.map(convertDbReviewToReview) : [];
 };
 
 export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>): Promise<Review | null> => {
-  const newReview = {
-    ...review,
+  const dbReview: Partial<DbReview> = {
+    platformid: review.platformId,
+    username: review.userName,
+    rating: review.rating,
+    comment: review.comment,
     date: new Date().toISOString(),
     flagged: false
   };
   
   const { data, error } = await supabase
     .from('reviews')
-    .insert(newReview)
+    .insert(dbReview)
     .select()
     .single();
   
@@ -99,7 +102,7 @@ export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>)
     return null;
   }
   
-  return data;
+  return data ? convertDbReviewToReview(data) : null;
 };
 
 export const flagReview = async (reviewId: string): Promise<boolean> => {
@@ -121,20 +124,46 @@ export const migrateDataToSupabase = async (
   platforms: Platform[], 
   reviews: Review[]
 ): Promise<boolean> => {
+  // Convert Platform objects to DbPlatform objects
+  const dbPlatforms = platforms.map(platform => ({
+    id: platform.id,
+    name: platform.name,
+    description: platform.description,
+    logo: platform.logo || null,
+    url: platform.url || platform.website, // Handle different field naming
+    tags: platform.tags,
+    features: platform.features,
+    pricing: platform.pricing,
+    rating: platform.rating,
+    reviewcount: platform.reviewCount,
+    apiavailable: platform.apiAvailable
+  }));
+  
   // Insert platforms
   const { error: platformsError } = await supabase
     .from('platforms')
-    .insert(platforms);
+    .insert(dbPlatforms);
   
   if (platformsError) {
     console.error('Error migrating platforms:', platformsError);
     return false;
   }
   
+  // Convert Review objects to DbReview objects
+  const dbReviews = reviews.map(review => ({
+    id: review.id,
+    platformid: review.platformId,
+    username: review.userName,
+    rating: review.rating,
+    comment: review.comment || null,
+    date: review.date,
+    flagged: review.flagged
+  }));
+  
   // Insert reviews
   const { error: reviewsError } = await supabase
     .from('reviews')
-    .insert(reviews);
+    .insert(dbReviews);
   
   if (reviewsError) {
     console.error('Error migrating reviews:', reviewsError);

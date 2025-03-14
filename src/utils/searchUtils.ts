@@ -1,5 +1,5 @@
 
-import { Platform, SearchResult } from '@/types/supabase';
+import { Platform, SearchResult, DbPlatform, convertDbPlatformToPlatform } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Client-side search function (for fallback and immediate filtering)
@@ -108,7 +108,7 @@ export const searchPlatformsDatabase = async (query: string): Promise<Platform[]
   try {
     if (!query.trim()) {
       const { data } = await supabase.from('platforms').select('*');
-      return data || [];
+      return data ? data.map(convertDbPlatformToPlatform) : [];
     }
 
     // First try text search on multiple columns
@@ -145,16 +145,18 @@ export const searchPlatformsDatabase = async (query: string): Promise<Platform[]
     if (!data || data.length === 0) {
       const allPlatforms = await supabase.from('platforms').select('*');
       if (allPlatforms.data) {
-        return searchPlatforms(allPlatforms.data, query);
+        const platforms = allPlatforms.data.map(convertDbPlatformToPlatform);
+        return searchPlatforms(platforms, query);
       }
     }
     
-    return data || [];
+    return data ? data.map(convertDbPlatformToPlatform) : [];
   } catch (error) {
     console.error('Error with database search:', error);
     // Fallback to fetching all platforms and searching client-side
     const { data } = await supabase.from('platforms').select('*');
-    return searchPlatforms(data || [], query);
+    const platforms = data ? data.map(convertDbPlatformToPlatform) : [];
+    return searchPlatforms(platforms, query);
   }
 };
 
@@ -171,7 +173,7 @@ export const searchPlatformsByFeature = async (feature: string): Promise<Platfor
       throw error;
     }
     
-    return data || [];
+    return data ? data.map(convertDbPlatformToPlatform) : [];
   } catch (error) {
     console.error('Error with feature search:', error);
     return [];
@@ -191,7 +193,7 @@ export const searchFreePlatforms = async (): Promise<Platform[]> => {
       throw error;
     }
     
-    return data || [];
+    return data ? data.map(convertDbPlatformToPlatform) : [];
   } catch (error) {
     console.error('Error with free platform search:', error);
     return [];
@@ -204,14 +206,14 @@ export const searchPlatformsWithAPI = async (): Promise<Platform[]> => {
     const { data, error } = await supabase
       .from('platforms')
       .select('*')
-      .eq('apiAvailable', true);
+      .eq('apiavailable', true);
     
     if (error) {
       console.error('Error searching platforms with API:', error);
       throw error;
     }
     
-    return data || [];
+    return data ? data.map(convertDbPlatformToPlatform) : [];
   } catch (error) {
     console.error('Error with API platform search:', error);
     return [];

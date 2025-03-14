@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -32,7 +31,14 @@ const PlatformPage = () => {
           return;
         }
         
-        setPlatform(platformData);
+        // Add the missing properties needed for PlatformDetail component 
+        const enhancedPlatform = {
+          ...platformData,
+          shortDescription: platformData.description.slice(0, 120) + '...',
+          website: platformData.url
+        } as Platform & { shortDescription: string; website: string };
+        
+        setPlatform(enhancedPlatform);
         
         // Fetch reviews for this platform
         const reviewsData = await getReviewsByPlatformId(id);
@@ -43,7 +49,12 @@ const PlatformPage = () => {
         const filtered = allPlatforms
           .filter(p => p.id !== id)
           .sort(() => 0.5 - Math.random())
-          .slice(0, 3);
+          .slice(0, 3)
+          .map(p => ({
+            ...p,
+            shortDescription: p.description.slice(0, 120) + '...',
+            website: p.url
+          })) as (Platform & { shortDescription: string; website: string })[];
         
         setSimilarPlatforms(filtered);
       } catch (error) {
@@ -130,18 +141,18 @@ const PlatformPage = () => {
             Back to results
           </a>
           
-          <PlatformDetail platform={platform} />
+          <PlatformDetail platform={platform as any} />
         </div>
         
         <div className="my-12">
-          <ReviewSection reviews={reviews} platformId={platform.id} />
+          <ReviewSection reviews={reviews as any} platformId={platform.id} />
         </div>
         
         <div className="mt-16">
           <h2 className="text-xl font-semibold mb-6">Similar Platforms</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {similarPlatforms.map((platform) => (
-              <PlatformCard key={platform.id} platform={platform} />
+              <PlatformCard key={platform.id} platform={platform as any} />
             ))}
           </div>
         </div>
