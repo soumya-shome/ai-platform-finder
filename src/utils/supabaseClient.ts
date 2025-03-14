@@ -135,51 +135,89 @@ export const migrateDataToSupabase = async (
   platforms: Platform[], 
   reviews: Review[]
 ): Promise<boolean> => {
-  // Convert Platform objects to DbPlatform objects
-  const dbPlatforms = platforms.map(platform => ({
-    id: platform.id,
-    name: platform.name,
-    description: platform.description,
-    logo: platform.logo || null,
-    url: platform.url || platform.website || '', // Handle both url and website fields
-    tags: platform.tags,
-    features: platform.features,
-    pricing: platform.pricing,
-    rating: platform.rating,
-    reviewcount: platform.reviewCount,
-    apiavailable: platform.apiAvailable
-  }));
-  
-  // Insert platforms
-  const { error: platformsError } = await supabase
-    .from('platforms')
-    .insert(dbPlatforms);
-  
-  if (platformsError) {
-    console.error('Error migrating platforms:', platformsError);
+  try {
+    // Convert Platform objects to DbPlatform objects
+    // IMPORTANT: Generate new UUIDs instead of using the string IDs from dummy data
+    const dbPlatforms = platforms.map(platform => {
+      // Generate a new UUID for each platform
+      const newId = crypto.randomUUID();
+      
+      return {
+        // Don't send the original string ID - let Supabase generate a UUID
+        id: undefined, 
+        name: platform.name,
+        description: platform.description,
+        logo: platform.logo || null,
+        url: platform.url || platform.website || '', // Handle both url and website fields
+        tags: platform.tags,
+        features: platform.features,
+        pricing: platform.pricing,
+        rating: platform.rating,
+        reviewcount: platform.reviewCount,
+        apiavailable: platform.apiAvailable
+      };
+    });
+    
+    // Insert platforms
+    const { data: insertedPlatforms, error: platformsError } = await supabase
+      .from('platforms')
+      .insert(dbPlatforms)
+      .select();
+    
+    if (platformsError) {
+      console.error('Error migrating platforms:', platformsError);
+      return false;
+    }
+    
+    // Create a mapping from old platform IDs to new UUIDs
+    const platformIdMap = new Map<string, string>();
+    
+    platforms.forEach((oldPlatform, index) => {
+      if (insertedPlatforms && insertedPlatforms[index]) {
+        platformIdMap.set(oldPlatform.id, insertedPlatforms[index].id);
+      }
+    });
+    
+    // Convert Review objects to DbReview objects with updated platform IDs
+    const dbReviews = reviews.map(review => {
+      const newPlatformId = platformIdMap.get(review.platformId);
+      
+      if (!newPlatformId) {
+        console.error(`Could not find new ID for platform ${review.platformId}`);
+        return null;
+      }
+      
+      return {
+        // Don't send the original ID - let Supabase generate a UUID
+        id: undefined,
+        platformid: newPlatformId,
+        username: review.userName,
+        rating: review.rating,
+        comment: review.comment || null,
+        date: review.date,
+        flagged: review.flagged
+      };
+    }).filter(review => review !== null) as DbReview[];
+    
+    if (dbReviews.length === 0) {
+      console.log('No reviews to migrate after platform ID mapping');
+      return true;
+    }
+    
+    // Insert reviews
+    const { error: reviewsError } = await supabase
+      .from('reviews')
+      .insert(dbReviews);
+    
+    if (reviewsError) {
+      console.error('Error migrating reviews:', reviewsError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in migration:', error);
     return false;
   }
-  
-  // Convert Review objects to DbReview objects
-  const dbReviews = reviews.map(review => ({
-    id: review.id,
-    platformid: review.platformId,
-    username: review.userName,
-    rating: review.rating,
-    comment: review.comment || null,
-    date: review.date,
-    flagged: review.flagged
-  }));
-  
-  // Insert reviews
-  const { error: reviewsError } = await supabase
-    .from('reviews')
-    .insert(dbReviews);
-  
-  if (reviewsError) {
-    console.error('Error migrating reviews:', reviewsError);
-    return false;
-  }
-  
-  return true;
 };
+

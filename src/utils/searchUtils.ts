@@ -1,4 +1,3 @@
-
 import { Platform, SearchResult, DbPlatform, convertDbPlatformToPlatform, convertDummyPlatformToPlatform } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -199,9 +198,10 @@ export const searchFreePlatforms = async (): Promise<Platform[]> => {
     // This avoids the complex type inference with the JSON query
     const freePlatforms = data ? data.filter(platform => {
       try {
-        // Check if the pricing.hasFree property is true
+        // Parse the pricing JSON and check if hasFree is true
         if (typeof platform.pricing === 'object' && platform.pricing !== null) {
-          return platform.pricing.hasFree === true;
+          const pricing = platform.pricing as { hasFree?: boolean };
+          return pricing.hasFree === true;
         }
         return false;
       } catch (e) {
