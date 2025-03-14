@@ -1,4 +1,3 @@
-
 export interface Platform {
   id: string;
   name: string;
@@ -288,7 +287,72 @@ export const popularTags = [
   "Speech-to-Text"
 ];
 
-// Function to get all unique tags from platforms
+const calculateRelevanceScore = (platform: Platform, searchQuery: string): number => {
+  if (!searchQuery.trim()) return 0;
+  
+  const query = searchQuery.toLowerCase();
+  const words = query.split(/\s+/);
+  let score = 0;
+
+  // Check name match
+  if (platform.name.toLowerCase().includes(query)) {
+    score += 10;
+  }
+
+  // Check description match
+  if (platform.description.toLowerCase().includes(query)) {
+    score += 5;
+  }
+
+  // Check tag matches
+  platform.tags.forEach(tag => {
+    if (tag.toLowerCase().includes(query)) {
+      score += 8;
+    }
+    
+    // Check if any word in the query matches the tag
+    words.forEach(word => {
+      if (tag.toLowerCase().includes(word) && word.length > 2) {
+        score += 3;
+      }
+    });
+  });
+
+  // Check feature matches
+  platform.features.forEach(feature => {
+    if (feature.toLowerCase().includes(query)) {
+      score += 6;
+    }
+    
+    // Check if any word in the query matches the feature
+    words.forEach(word => {
+      if (feature.toLowerCase().includes(word) && word.length > 2) {
+        score += 2;
+      }
+    });
+  });
+
+  return score;
+};
+
+export const searchPlatforms = (platforms: Platform[], query: string): Platform[] => {
+  if (!query.trim()) return platforms;
+
+  const results = platforms.map(platform => ({
+    platform,
+    score: calculateRelevanceScore(platform, query)
+  }));
+
+  // Sort by score (descending)
+  results.sort((a, b) => b.score - a.score);
+
+  // Filter out very low relevance results
+  const filteredResults = results.filter(result => result.score > 0);
+
+  // Return just the platforms in ranked order
+  return filteredResults.map(result => result.platform);
+};
+
 export const getAllTags = (): string[] => {
   const tagsSet = new Set<string>();
   platforms.forEach(platform => {
@@ -297,17 +361,14 @@ export const getAllTags = (): string[] => {
   return Array.from(tagsSet);
 };
 
-// Function to filter platforms by tag
 export const filterPlatformsByTag = (tag: string): Platform[] => {
   return platforms.filter(platform => platform.tags.includes(tag));
 };
 
-// Function to get platform by ID
 export const getPlatformById = (id: string): Platform | undefined => {
   return platforms.find(platform => platform.id === id);
 };
 
-// Function to get reviews by platform ID
 export const getReviewsByPlatformId = (platformId: string): Review[] => {
   return reviews.filter(review => review.platformId === platformId);
 };

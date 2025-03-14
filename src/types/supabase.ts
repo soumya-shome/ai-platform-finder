@@ -4,7 +4,8 @@ export interface Platform {
   name: string;
   description: string;
   logo?: string;
-  url: string;
+  url: string;  // This is called url in Supabase but website in dummyData
+  website?: string; // Adding this for compatibility with dummyData
   tags: string[];
   features: string[];
   pricing: {
@@ -20,6 +21,8 @@ export interface Platform {
   reviewCount: number;
   apiAvailable: boolean;
   created_at?: string;
+  // UI-specific fields
+  shortDescription?: string;
 }
 
 export interface Review {
@@ -87,7 +90,7 @@ export function convertPlatformToDbPlatform(platform: Platform): DbPlatform {
     name: platform.name,
     description: platform.description,
     logo: platform.logo,
-    url: platform.url,
+    url: platform.url || platform.website || '', // Handle both url and website fields
     tags: platform.tags,
     features: platform.features,
     pricing: platform.pricing,
@@ -104,7 +107,7 @@ export function convertDbReviewToReview(dbReview: DbReview): Review {
     platformId: dbReview.platformid,
     userName: dbReview.username,
     rating: dbReview.rating,
-    comment: dbReview.comment,
+    comment: dbReview.comment || undefined,
     date: dbReview.date || new Date().toISOString(),
     flagged: dbReview.flagged || false
   };
@@ -119,5 +122,37 @@ export function convertReviewToDbReview(review: Review): DbReview {
     comment: review.comment,
     date: review.date,
     flagged: review.flagged
+  };
+}
+
+// Function to convert dummyData Platform to our Platform type
+export function convertDummyPlatformToPlatform(dummyPlatform: any): Platform {
+  return {
+    id: dummyPlatform.id,
+    name: dummyPlatform.name,
+    description: dummyPlatform.description,
+    logo: dummyPlatform.logo,
+    url: dummyPlatform.website || '', // Map website to url
+    website: dummyPlatform.website,
+    tags: dummyPlatform.tags,
+    features: dummyPlatform.features,
+    pricing: dummyPlatform.pricing,
+    rating: dummyPlatform.rating,
+    reviewCount: dummyPlatform.reviewCount,
+    apiAvailable: dummyPlatform.apiAvailable,
+    shortDescription: dummyPlatform.shortDescription
+  };
+}
+
+// Function to convert dummyData Review to our Review type
+export function convertDummyReviewToReview(dummyReview: any): Review {
+  return {
+    id: dummyReview.id,
+    platformId: dummyReview.platformId,
+    userName: dummyReview.userName,
+    rating: dummyReview.rating,
+    comment: dummyReview.comment,
+    date: dummyReview.date,
+    flagged: dummyReview.flagged
   };
 }

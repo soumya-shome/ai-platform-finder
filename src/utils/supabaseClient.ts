@@ -1,5 +1,14 @@
 
-import { Platform, Review, DbPlatform, DbReview, convertDbPlatformToPlatform, convertReviewToDbReview, convertDbReviewToReview } from '@/types/supabase';
+import { 
+  Platform, 
+  Review, 
+  DbPlatform, 
+  DbReview, 
+  convertDbPlatformToPlatform, 
+  convertReviewToDbReview, 
+  convertDbReviewToReview,
+  convertDummyPlatformToPlatform
+} from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Export searchPlatformsDatabase function 
@@ -82,11 +91,13 @@ export const getReviewsByPlatformId = async (platformId: string): Promise<Review
 };
 
 export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>): Promise<Review | null> => {
-  const dbReview: Partial<DbReview> = {
+  // Create a fully populated DbReview object, not a Partial one
+  const dbReview: DbReview = {
+    id: crypto.randomUUID(), // Generate a new UUID
     platformid: review.platformId,
     username: review.userName,
     rating: review.rating,
-    comment: review.comment,
+    comment: review.comment || null,
     date: new Date().toISOString(),
     flagged: false
   };
@@ -130,7 +141,7 @@ export const migrateDataToSupabase = async (
     name: platform.name,
     description: platform.description,
     logo: platform.logo || null,
-    url: platform.url || platform.website, // Handle different field naming
+    url: platform.url || platform.website || '', // Handle both url and website fields
     tags: platform.tags,
     features: platform.features,
     pricing: platform.pricing,

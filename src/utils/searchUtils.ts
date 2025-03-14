@@ -1,5 +1,5 @@
 
-import { Platform, SearchResult, DbPlatform, convertDbPlatformToPlatform } from '@/types/supabase';
+import { Platform, SearchResult, DbPlatform, convertDbPlatformToPlatform, convertDummyPlatformToPlatform } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Client-side search function (for fallback and immediate filtering)

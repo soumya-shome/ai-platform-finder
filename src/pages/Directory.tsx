@@ -4,16 +4,13 @@ import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
 import TagBadge from '@/components/TagBadge';
-import { Platform } from '@/types/supabase';
-import { searchPlatforms, searchPlatformsDatabase } from '@/utils/searchUtils';
-import { getPlatformsByTag, getAllTags, getPlatforms } from '@/utils/supabaseClient';
+import { Platform, convertDummyPlatformToPlatform } from '@/types/supabase';
+import { searchPlatforms } from '@/utils/searchUtils';
+import { getPlatformsByTag, getAllTags, getPlatforms, searchPlatformsDatabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
-type EnhancedPlatform = Platform & { 
-  shortDescription?: string; 
-  website?: string;
-};
+type EnhancedPlatform = Platform;
 
 const Directory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,14 +58,6 @@ const Directory = () => {
     loadTags();
   }, [toast]);
   
-  const enhancePlatforms = (platforms: Platform[]): EnhancedPlatform[] => {
-    return platforms.map(p => ({
-      ...p,
-      shortDescription: p.description.slice(0, 120) + '...',
-      website: p.url
-    }));
-  };
-  
   useEffect(() => {
     setQuery(initialQuery);
     setSelectedTag(initialTag);
@@ -93,8 +82,7 @@ const Directory = () => {
           
           const startIdx = (currentPage - 1) * platformsPerPage;
           const endIdx = startIdx + platformsPerPage;
-          const enhancedResults = enhancePlatforms(results);
-          setFilteredPlatforms(enhancedResults.slice(startIdx, endIdx));
+          setFilteredPlatforms(results.slice(startIdx, endIdx));
         } else {
           // Fallback to local data
           const { platforms } = await import('@/utils/dummyData');
@@ -102,32 +90,17 @@ const Directory = () => {
           if (initialTag) {
             const { filterPlatformsByTag } = await import('@/utils/dummyData');
             const results = filterPlatformsByTag(initialTag);
-            const enhancedResults = results.map(p => ({
-              ...p,
-              url: p.website,
-              apiAvailable: p.apiAvailable,
-              reviewCount: p.reviewCount
-            } as EnhancedPlatform));
+            const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
             setFilteredPlatforms(enhancedResults);
             setTotalPlatforms(results.length);
           } else if (initialQuery) {
             const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-            const results = searchLocalPlatforms ? searchLocalPlatforms(platforms, initialQuery) : [];
-            const enhancedResults = results.map(p => ({
-              ...p,
-              url: p.website,
-              apiAvailable: p.apiAvailable,
-              reviewCount: p.reviewCount
-            } as EnhancedPlatform));
+            const results = searchLocalPlatforms(platforms, initialQuery);
+            const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
             setFilteredPlatforms(enhancedResults);
             setTotalPlatforms(results.length);
           } else {
-            const enhancedResults = platforms.map(p => ({
-              ...p,
-              url: p.website,
-              apiAvailable: p.apiAvailable,
-              reviewCount: p.reviewCount
-            } as EnhancedPlatform));
+            const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
             setFilteredPlatforms(enhancedResults);
             setTotalPlatforms(platforms.length);
           }
@@ -139,22 +112,18 @@ const Directory = () => {
         // Fallback to local data
         const { platforms, filterPlatformsByTag } = await import('@/utils/dummyData');
         
-        const enhancePlatform = (p: any): EnhancedPlatform => ({
-          ...p,
-          url: p.website,
-          apiAvailable: p.apiAvailable,
-          reviewCount: p.reviewCount
-        });
-        
         if (initialTag) {
           const results = filterPlatformsByTag(initialTag);
-          setFilteredPlatforms(results.map(enhancePlatform));
+          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
+          setFilteredPlatforms(enhancedResults);
         } else if (initialQuery) {
           const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-          const results = searchLocalPlatforms ? searchLocalPlatforms(platforms, initialQuery) : searchPlatforms(platforms, initialQuery);
-          setFilteredPlatforms(results.map(enhancePlatform));
+          const results = searchLocalPlatforms(platforms, initialQuery);
+          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
+          setFilteredPlatforms(enhancedResults);
         } else {
-          setFilteredPlatforms(platforms.map(enhancePlatform));
+          const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
+          setFilteredPlatforms(enhancedResults);
         }
         
         toast({
@@ -180,18 +149,12 @@ const Directory = () => {
       if (useDatabase) {
         const results = await searchPlatformsDatabase(searchQuery);
         setTotalPlatforms(results.length);
-        const enhancedResults = enhancePlatforms(results);
-        setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
+        setFilteredPlatforms(results.slice(0, platformsPerPage));
       } else {
         const { platforms } = await import('@/utils/dummyData');
         const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-        const results = searchLocalPlatforms ? searchLocalPlatforms(platforms, searchQuery) : searchPlatforms(platforms, searchQuery);
-        const enhancedResults = results.map(p => ({
-          ...p,
-          url: p.website,
-          apiAvailable: p.apiAvailable,
-          reviewCount: p.reviewCount
-        } as EnhancedPlatform));
+        const results = searchLocalPlatforms(platforms, searchQuery);
+        const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
         setTotalPlatforms(results.length);
         setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
       }
@@ -200,13 +163,9 @@ const Directory = () => {
     } catch (error) {
       console.error('Search error:', error);
       const { platforms } = await import('@/utils/dummyData');
-      const results = searchPlatforms(platforms, searchQuery);
-      const enhancedResults = results.map(p => ({
-        ...p,
-        url: p.website,
-        apiAvailable: p.apiAvailable,
-        reviewCount: p.reviewCount
-      } as EnhancedPlatform));
+      const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
+      const results = searchLocalPlatforms(platforms, searchQuery);
+      const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
       setFilteredPlatforms(enhancedResults);
       
       toast({
@@ -228,16 +187,10 @@ const Directory = () => {
         if (useDatabase) {
           const data = await getPlatforms();
           setTotalPlatforms(data.length || 0);
-          const enhancedResults = enhancePlatforms(data);
-          setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
+          setFilteredPlatforms(data.slice(0, platformsPerPage));
         } else {
           const { platforms } = await import('@/utils/dummyData');
-          const enhancedResults = platforms.map(p => ({
-            ...p,
-            url: p.website,
-            apiAvailable: p.apiAvailable,
-            reviewCount: p.reviewCount
-          } as EnhancedPlatform));
+          const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
           setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
           setTotalPlatforms(platforms.length);
         }
@@ -246,12 +199,7 @@ const Directory = () => {
       } catch (error) {
         console.error('Error fetching platforms:', error);
         const { platforms } = await import('@/utils/dummyData');
-        const enhancedResults = platforms.map(p => ({
-          ...p,
-          url: p.website,
-          apiAvailable: p.apiAvailable,
-          reviewCount: p.reviewCount
-        } as EnhancedPlatform));
+        const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
         setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
         setTotalPlatforms(platforms.length);
       }
@@ -264,17 +212,11 @@ const Directory = () => {
         if (useDatabase) {
           const results = await getPlatformsByTag(tag);
           setTotalPlatforms(results.length);
-          const enhancedResults = enhancePlatforms(results);
-          setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
+          setFilteredPlatforms(results.slice(0, platformsPerPage));
         } else {
           const { filterPlatformsByTag } = await import('@/utils/dummyData');
           const results = filterPlatformsByTag(tag);
-          const enhancedResults = results.map(p => ({
-            ...p,
-            url: p.website,
-            apiAvailable: p.apiAvailable,
-            reviewCount: p.reviewCount
-          } as EnhancedPlatform));
+          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
           setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
           setTotalPlatforms(results.length);
         }
@@ -284,12 +226,7 @@ const Directory = () => {
         console.error('Error filtering by tag:', error);
         const { filterPlatformsByTag } = await import('@/utils/dummyData');
         const results = filterPlatformsByTag(tag);
-        const enhancedResults = results.map(p => ({
-          ...p,
-          url: p.website,
-          apiAvailable: p.apiAvailable,
-          reviewCount: p.reviewCount
-        } as EnhancedPlatform));
+        const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
         setFilteredPlatforms(enhancedResults);
         
         toast({
@@ -471,17 +408,11 @@ const Directory = () => {
                 if (useDatabase) {
                   getPlatforms().then(data => {
                     setTotalPlatforms(data.length);
-                    const enhancedResults = enhancePlatforms(data);
-                    setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
+                    setFilteredPlatforms(data.slice(0, platformsPerPage));
                   });
                 } else {
                   import('@/utils/dummyData').then(({ platforms }) => {
-                    const enhancedResults = platforms.map(p => ({
-                      ...p,
-                      url: p.website,
-                      apiAvailable: p.apiAvailable,
-                      reviewCount: p.reviewCount
-                    } as EnhancedPlatform));
+                    const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
                     setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
                     setTotalPlatforms(platforms.length);
                   });
