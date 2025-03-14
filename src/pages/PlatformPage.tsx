@@ -5,13 +5,15 @@ import Layout from '@/components/Layout';
 import PlatformDetail from '@/components/PlatformDetail';
 import ReviewSection from '@/components/ReviewSection';
 import PlatformCard from '@/components/PlatformCard';
-import { platforms, getPlatformById, getReviewsByPlatformId } from '@/utils/dummyData';
+import { Platform, Review } from '@/types/supabase';
+import { getPlatformById, getReviewsByPlatformId, getPlatforms } from '@/utils/supabaseClient';
 
 const PlatformPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [platform, setPlatform] = useState(id ? getPlatformById(id) : undefined);
-  const [reviews, setReviews] = useState(id ? getReviewsByPlatformId(id) : []);
+  const [platform, setPlatform] = useState<Platform | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [similarPlatforms, setSimilarPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -20,25 +22,40 @@ const PlatformPage = () => {
       return;
     }
     
-    // Simulate fetch delay
-    setIsLoading(true);
-    setTimeout(() => {
-      const foundPlatform = getPlatformById(id);
-      if (foundPlatform) {
-        setPlatform(foundPlatform);
-        setReviews(getReviewsByPlatformId(id));
-      } else {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch platform details
+        const platformData = await getPlatformById(id);
+        if (!platformData) {
+          navigate('/directory');
+          return;
+        }
+        
+        setPlatform(platformData);
+        
+        // Fetch reviews for this platform
+        const reviewsData = await getReviewsByPlatformId(id);
+        setReviews(reviewsData);
+        
+        // Get similar platforms (based on tags)
+        const allPlatforms = await getPlatforms();
+        const filtered = allPlatforms
+          .filter(p => p.id !== id)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+        
+        setSimilarPlatforms(filtered);
+      } catch (error) {
+        console.error('Error fetching platform data:', error);
         navigate('/directory');
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 300);
+    };
+    
+    fetchData();
   }, [id, navigate]);
-  
-  // Get similar platforms (just recommend others for the MVP)
-  const similarPlatforms = platforms
-    .filter(p => p.id !== id)
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 3);
 
   if (isLoading) {
     return (

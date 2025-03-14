@@ -1,4 +1,5 @@
-import { Platform, Review } from './dummyData';
+
+import { Platform, Review } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
 
 // Export searchPlatformsDatabase function 

@@ -1,15 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
 import TagBadge from '@/components/TagBadge';
-import { platforms, getAllTags as getLocalTags, filterPlatformsByTag as filterLocalPlatformsByTag } from '@/utils/dummyData';
+import { Platform } from '@/types/supabase';
 import { searchPlatforms, searchPlatformsDatabase } from '@/utils/searchUtils';
-import { getPlatformsByTag, getAllTags } from '@/utils/supabaseClient';
+import { getPlatformsByTag, getAllTags, getPlatforms } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { supabase } from '@/integrations/supabase/client';
 
 const Directory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,7 +19,7 @@ const Directory = () => {
   
   const [query, setQuery] = useState(initialQuery);
   const [selectedTag, setSelectedTag] = useState(initialTag);
-  const [filteredPlatforms, setFilteredPlatforms] = useState(platforms);
+  const [filteredPlatforms, setFilteredPlatforms] = useState<Platform[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [useDatabase, setUseDatabase] = useState(true);
@@ -36,16 +36,19 @@ const Directory = () => {
         if (dbTags.length > 0) {
           setAvailableTags(dbTags);
         } else {
-          setAvailableTags(getLocalTags());
           setUseDatabase(false);
+          toast({
+            title: "Database not initialized",
+            description: "Please initialize the database with the button at the bottom-right",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error('Error loading tags:', error);
-        setAvailableTags(getLocalTags());
         setUseDatabase(false);
         toast({
           title: "Database connection issue",
-          description: "Using local data fallback",
+          description: "Please initialize the database with the button at the bottom-right",
           variant: "destructive",
         });
       }
@@ -64,15 +67,15 @@ const Directory = () => {
       
       try {
         if (useDatabase) {
-          let results;
+          let results: Platform[] = [];
           
           if (initialTag) {
             results = await getPlatformsByTag(initialTag);
           } else if (initialQuery) {
             results = await searchPlatformsDatabase(initialQuery);
           } else {
-            const { data } = await supabase.from('platforms').select('*');
-            results = data || [];
+            const platforms = await getPlatforms();
+            results = platforms;
           }
           
           setTotalPlatforms(results.length);
@@ -81,8 +84,12 @@ const Directory = () => {
           const endIdx = startIdx + platformsPerPage;
           setFilteredPlatforms(results.slice(startIdx, endIdx));
         } else {
+          // Fallback to local data
+          const { platforms } = await import('@/utils/dummyData');
+          
           if (initialTag) {
-            const results = filterLocalPlatformsByTag(initialTag);
+            const { filterPlatformsByTag } = await import('@/utils/dummyData');
+            const results = filterPlatformsByTag(initialTag);
             setFilteredPlatforms(results);
             setTotalPlatforms(results.length);
           } else if (initialQuery) {
@@ -97,8 +104,12 @@ const Directory = () => {
       } catch (error) {
         console.error('Error loading platforms:', error);
         setUseDatabase(false);
+        
+        // Fallback to local data
+        const { platforms, filterPlatformsByTag } = await import('@/utils/dummyData');
+        
         if (initialTag) {
-          setFilteredPlatforms(filterLocalPlatformsByTag(initialTag));
+          setFilteredPlatforms(filterPlatformsByTag(initialTag));
         } else if (initialQuery) {
           setFilteredPlatforms(searchPlatforms(platforms, initialQuery));
         } else {
@@ -130,6 +141,7 @@ const Directory = () => {
         setTotalPlatforms(results.length);
         setFilteredPlatforms(results.slice(0, platformsPerPage));
       } else {
+        const { platforms } = await import('@/utils/dummyData');
         const results = searchPlatforms(platforms, searchQuery);
         setTotalPlatforms(results.length);
         setFilteredPlatforms(results.slice(0, platformsPerPage));
@@ -138,6 +150,7 @@ const Directory = () => {
       setSearchParams({ q: searchQuery, page: '1' });
     } catch (error) {
       console.error('Search error:', error);
+      const { platforms } = await import('@/utils/dummyData');
       const results = searchPlatforms(platforms, searchQuery);
       setFilteredPlatforms(results);
       
@@ -158,10 +171,11 @@ const Directory = () => {
       
       try {
         if (useDatabase) {
-          const { data } = await supabase.from('platforms').select('*');
-          setTotalPlatforms(data?.length || 0);
-          setFilteredPlatforms((data || []).slice(0, platformsPerPage));
+          const data = await getPlatforms();
+          setTotalPlatforms(data.length || 0);
+          setFilteredPlatforms(data.slice(0, platformsPerPage));
         } else {
+          const { platforms } = await import('@/utils/dummyData');
           setFilteredPlatforms(platforms.slice(0, platformsPerPage));
           setTotalPlatforms(platforms.length);
         }
@@ -169,6 +183,7 @@ const Directory = () => {
         setSearchParams({ page: '1' });
       } catch (error) {
         console.error('Error fetching platforms:', error);
+        const { platforms } = await import('@/utils/dummyData');
         setFilteredPlatforms(platforms.slice(0, platformsPerPage));
         setTotalPlatforms(platforms.length);
       }
@@ -183,7 +198,8 @@ const Directory = () => {
           setTotalPlatforms(results.length);
           setFilteredPlatforms(results.slice(0, platformsPerPage));
         } else {
-          const results = filterLocalPlatformsByTag(tag);
+          const { filterPlatformsByTag } = await import('@/utils/dummyData');
+          const results = filterPlatformsByTag(tag);
           setTotalPlatforms(results.length);
           setFilteredPlatforms(results.slice(0, platformsPerPage));
         }
@@ -191,7 +207,8 @@ const Directory = () => {
         setSearchParams({ tag, page: '1' });
       } catch (error) {
         console.error('Error filtering by tag:', error);
-        const results = filterLocalPlatformsByTag(tag);
+        const { filterPlatformsByTag } = await import('@/utils/dummyData');
+        const results = filterPlatformsByTag(tag);
         setFilteredPlatforms(results);
         
         toast({
@@ -371,15 +388,15 @@ const Directory = () => {
                 setSelectedTag('');
                 setPage(1);
                 if (useDatabase) {
-                  supabase.from('platforms').select('*').then(({ data }) => {
-                    if (data) {
-                      setTotalPlatforms(data.length);
-                      setFilteredPlatforms(data.slice(0, platformsPerPage));
-                    }
+                  getPlatforms().then(data => {
+                    setTotalPlatforms(data.length);
+                    setFilteredPlatforms(data.slice(0, platformsPerPage));
                   });
                 } else {
-                  setFilteredPlatforms(platforms.slice(0, platformsPerPage));
-                  setTotalPlatforms(platforms.length);
+                  import('@/utils/dummyData').then(({ platforms }) => {
+                    setFilteredPlatforms(platforms.slice(0, platformsPerPage));
+                    setTotalPlatforms(platforms.length);
+                  });
                 }
                 setSearchParams({});
               }}

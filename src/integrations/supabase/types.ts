@@ -9,7 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      platforms: {
+        Row: {
+          apiavailable: boolean
+          created_at: string | null
+          description: string
+          features: string[]
+          id: string
+          logo: string | null
+          name: string
+          pricing: Json
+          rating: number
+          reviewcount: number
+          tags: string[]
+          url: string
+        }
+        Insert: {
+          apiavailable?: boolean
+          created_at?: string | null
+          description: string
+          features?: string[]
+          id?: string
+          logo?: string | null
+          name: string
+          pricing?: Json
+          rating?: number
+          reviewcount?: number
+          tags?: string[]
+          url: string
+        }
+        Update: {
+          apiavailable?: boolean
+          created_at?: string | null
+          description?: string
+          features?: string[]
+          id?: string
+          logo?: string | null
+          name?: string
+          pricing?: Json
+          rating?: number
+          reviewcount?: number
+          tags?: string[]
+          url?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          date: string | null
+          flagged: boolean | null
+          id: string
+          platformid: string
+          rating: number
+          username: string
+        }
+        Insert: {
+          comment?: string | null
+          date?: string | null
+          flagged?: boolean | null
+          id?: string
+          platformid: string
+          rating: number
+          username: string
+        }
+        Update: {
+          comment?: string | null
+          date?: string | null
+          flagged?: boolean | null
+          id?: string
+          platformid?: string
+          rating?: number
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_platformid_fkey"
+            columns: ["platformid"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

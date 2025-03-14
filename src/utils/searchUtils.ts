@@ -1,12 +1,6 @@
 
-import { Platform } from './dummyData';
+import { Platform, SearchResult } from '@/types/supabase';
 import { supabase } from '@/integrations/supabase/client';
-
-// Define SearchResult interface
-interface SearchResult {
-  platform: Platform;
-  score: number;
-}
 
 // Client-side search function (for fallback and immediate filtering)
 // Function to calculate a relevance score based on search terms
