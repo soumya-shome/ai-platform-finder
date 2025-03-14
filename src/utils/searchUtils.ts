@@ -185,19 +185,32 @@ export const searchPlatformsByFeature = async (feature: string): Promise<Platfor
 // Free platform search - find platforms with free tier
 export const searchFreePlatforms = async (): Promise<Platform[]> => {
   try {
-    // Use explicit typing to avoid deep type instantiation
+    // Use a more explicit approach to avoid excessive type instantiation
     const { data, error } = await supabase
       .from('platforms')
-      .select('*')
-      .eq('pricing->hasFree', true);
+      .select('*');
     
     if (error) {
       console.error('Error searching free platforms:', error);
       throw error;
     }
     
-    // Use explicit conversion to Platform[] to avoid type issues
-    return (data || []).map(convertDbPlatformToPlatform);
+    // Filter the platforms with free tier after fetching them
+    // This avoids the complex type inference with the JSON query
+    const freePlatforms = data ? data.filter(platform => {
+      try {
+        // Check if the pricing.hasFree property is true
+        if (typeof platform.pricing === 'object' && platform.pricing !== null) {
+          return platform.pricing.hasFree === true;
+        }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }) : [];
+    
+    // Convert to Platform[] type
+    return freePlatforms.map(convertDbPlatformToPlatform);
   } catch (error) {
     console.error('Error with free platform search:', error);
     return [];
