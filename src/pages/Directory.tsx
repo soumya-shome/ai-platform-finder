@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -6,10 +5,11 @@ import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
 import TagBadge from '@/components/TagBadge';
 import { platforms, getAllTags as getLocalTags, filterPlatformsByTag as filterLocalPlatformsByTag } from '@/utils/dummyData';
-import { searchPlatforms } from '@/utils/searchUtils';
-import { searchPlatformsDatabase, getPlatformsByTag, getAllTags } from '@/utils/supabaseClient';
+import { searchPlatforms, searchPlatformsDatabase } from '@/utils/searchUtils';
+import { getPlatformsByTag, getAllTags } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { supabase } from '@/integrations/supabase/client';
 
 const Directory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,14 +30,12 @@ const Directory = () => {
   const { toast } = useToast();
   
   useEffect(() => {
-    // Load tags from database
     const loadTags = async () => {
       try {
         const dbTags = await getAllTags();
         if (dbTags.length > 0) {
           setAvailableTags(dbTags);
         } else {
-          // Fallback to local tags
           setAvailableTags(getLocalTags());
           setUseDatabase(false);
         }
@@ -57,7 +55,6 @@ const Directory = () => {
   }, [toast]);
   
   useEffect(() => {
-    // Update state based on URL params
     setQuery(initialQuery);
     setSelectedTag(initialTag);
     setPage(currentPage);
@@ -80,12 +77,10 @@ const Directory = () => {
           
           setTotalPlatforms(results.length);
           
-          // Slice results for pagination
           const startIdx = (currentPage - 1) * platformsPerPage;
           const endIdx = startIdx + platformsPerPage;
           setFilteredPlatforms(results.slice(startIdx, endIdx));
         } else {
-          // Fallback to local data
           if (initialTag) {
             const results = filterLocalPlatformsByTag(initialTag);
             setFilteredPlatforms(results);
@@ -101,7 +96,6 @@ const Directory = () => {
         }
       } catch (error) {
         console.error('Error loading platforms:', error);
-        // Fallback to local data
         setUseDatabase(false);
         if (initialTag) {
           setFilteredPlatforms(filterLocalPlatformsByTag(initialTag));
@@ -141,11 +135,9 @@ const Directory = () => {
         setFilteredPlatforms(results.slice(0, platformsPerPage));
       }
       
-      // Update URL
       setSearchParams({ q: searchQuery, page: '1' });
     } catch (error) {
       console.error('Search error:', error);
-      // Fallback to client-side search
       const results = searchPlatforms(platforms, searchQuery);
       setFilteredPlatforms(results);
       
@@ -161,7 +153,6 @@ const Directory = () => {
   
   const handleTagSelect = async (tag: string) => {
     if (selectedTag === tag) {
-      // Deselect tag
       setSelectedTag('');
       setPage(1);
       
@@ -182,7 +173,6 @@ const Directory = () => {
         setTotalPlatforms(platforms.length);
       }
     } else {
-      // Select tag
       setSelectedTag(tag);
       setQuery('');
       setPage(1);
@@ -198,11 +188,9 @@ const Directory = () => {
           setFilteredPlatforms(results.slice(0, platformsPerPage));
         }
         
-        // Update URL
         setSearchParams({ tag, page: '1' });
       } catch (error) {
         console.error('Error filtering by tag:', error);
-        // Fallback to local filtering
         const results = filterLocalPlatformsByTag(tag);
         setFilteredPlatforms(results);
         
@@ -218,11 +206,9 @@ const Directory = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     
-    // Calculate slice indices
     const startIdx = (newPage - 1) * platformsPerPage;
     const endIdx = startIdx + platformsPerPage;
     
-    // Update URL with new page
     const params: { [key: string]: string } = { page: newPage.toString() };
     if (query) params.q = query;
     if (selectedTag) params.tag = selectedTag;
@@ -231,7 +217,6 @@ const Directory = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Calculate total pages
   const totalPages = Math.ceil(totalPlatforms / platformsPerPage);
 
   return (
@@ -328,7 +313,6 @@ const Directory = () => {
                   )}
                   
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    // Show pages around current page
                     let pageNum;
                     if (totalPages <= 5) {
                       pageNum = i + 1;

@@ -1,18 +1,8 @@
+import { Platform, Review } from './dummyData';
+import { supabase } from '@/integrations/supabase/client';
 
-import { createClient } from '@supabase/supabase-js';
-import type { Platform, Review } from './dummyData';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase credentials. Some features may not work correctly.');
-}
-
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
-);
+// Export searchPlatformsDatabase function 
+export { searchPlatformsDatabase } from './searchUtils';
 
 // Platform-related database operations
 export const getPlatforms = async (): Promise<Platform[]> => {

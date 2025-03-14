@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { migrateDataToSupabase } from '@/utils/supabaseClient';
 import { platforms, reviews } from '@/utils/dummyData';
+import { supabase } from '@/integrations/supabase/client';
 
 const DatabaseInitializer = () => {
   const [isInitializing, setIsInitializing] = useState(false);
