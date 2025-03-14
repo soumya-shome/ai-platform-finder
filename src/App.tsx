@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Directory from "./pages/Directory";
 import PlatformPage from "./pages/PlatformPage";
 import NotFound from "./pages/NotFound";
+import DatabaseInitializer from "./components/DatabaseInitializer";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/platform/:id" element={<PlatformPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <DatabaseInitializer />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

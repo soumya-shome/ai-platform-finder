@@ -1,14 +1,7 @@
-
 import { Platform } from './dummyData';
+import { supabase } from './supabaseClient';
 
-// In a real application, this would be connected to an actual LLM
-// For the MVP, we'll simulate natural language search with a scoring function
-
-interface SearchResult {
-  platform: Platform;
-  score: number;
-}
-
+// Client-side search function (for fallback and immediate filtering)
 // Function to calculate a relevance score based on search terms
 const calculateRelevanceScore = (platform: Platform, searchQuery: string): number => {
   if (!searchQuery.trim()) return 0;
@@ -90,7 +83,7 @@ const calculateRelevanceScore = (platform: Platform, searchQuery: string): numbe
   return score;
 };
 
-// Search function that returns ranked platforms based on a query
+// Client-side search function (for fallback and immediate filtering)
 export const searchPlatforms = (platforms: Platform[], query: string): Platform[] => {
   if (!query.trim()) return platforms;
 
@@ -107,4 +100,119 @@ export const searchPlatforms = (platforms: Platform[], query: string): Platform[
 
   // Return just the platforms in ranked order
   return filteredResults.map(result => result.platform);
+};
+
+// Server-side search with Supabase full-text search
+export const searchPlatformsDatabase = async (query: string): Promise<Platform[]> => {
+  try {
+    if (!query.trim()) {
+      const { data } = await supabase.from('platforms').select('*');
+      return data || [];
+    }
+
+    // First try text search on multiple columns
+    const searchQuery = query.trim().toLowerCase();
+    
+    let { data, error } = await supabase
+      .from('platforms')
+      .select('*')
+      .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+      .order('rating', { ascending: false });
+    
+    if (error) {
+      console.error('Error searching platforms:', error);
+      throw error;
+    }
+
+    // If no direct matches, try more advanced search techniques
+    if (!data || data.length === 0) {
+      // Try searching by tags
+      const { data: tagResults, error: tagError } = await supabase
+        .from('platforms')
+        .select('*')
+        .contains('tags', [searchQuery])
+        .order('rating', { ascending: false });
+      
+      if (tagError) {
+        console.error('Error searching platforms by tags:', tagError);
+      } else if (tagResults && tagResults.length > 0) {
+        data = tagResults;
+      }
+    }
+
+    // Fallback to client-side search if no results from database
+    if (!data || data.length === 0) {
+      const allPlatforms = await supabase.from('platforms').select('*');
+      if (allPlatforms.data) {
+        return searchPlatforms(allPlatforms.data, query);
+      }
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error with database search:', error);
+    // Fallback to fetching all platforms and searching client-side
+    const { data } = await supabase.from('platforms').select('*');
+    return searchPlatforms(data || [], query);
+  }
+};
+
+// Feature-based search - find platforms based on specific features
+export const searchPlatformsByFeature = async (feature: string): Promise<Platform[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('platforms')
+      .select('*')
+      .contains('features', [feature]);
+    
+    if (error) {
+      console.error('Error searching platforms by feature:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error with feature search:', error);
+    return [];
+  }
+};
+
+// Free platform search - find platforms with free tier
+export const searchFreePlatforms = async (): Promise<Platform[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('platforms')
+      .select('*')
+      .eq('pricing->hasFree', true);
+    
+    if (error) {
+      console.error('Error searching free platforms:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error with free platform search:', error);
+    return [];
+  }
+};
+
+// API availability search - find platforms with API
+export const searchPlatformsWithAPI = async (): Promise<Platform[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('platforms')
+      .select('*')
+      .eq('apiAvailable', true);
+    
+    if (error) {
+      console.error('Error searching platforms with API:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error with API platform search:', error);
+    return [];
+  }
 };
