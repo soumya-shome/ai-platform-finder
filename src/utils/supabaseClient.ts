@@ -91,7 +91,7 @@ export const getReviewsByPlatformId = async (platformId: string): Promise<Review
 };
 
 export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>): Promise<Review | null> => {
-  // Create a fully populated DbReview object, not a Partial one
+  // Create a complete DbReview object with required fields
   const dbReview: DbReview = {
     id: crypto.randomUUID(), // Generate a new UUID
     platformid: review.platformId,

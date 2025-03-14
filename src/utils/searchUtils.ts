@@ -163,7 +163,7 @@ export const searchPlatformsDatabase = async (query: string): Promise<Platform[]
 // Feature-based search - find platforms based on specific features
 export const searchPlatformsByFeature = async (feature: string): Promise<Platform[]> => {
   try {
-    // Explicitly define the type as DbPlatform[] to avoid deep type instantiation
+    // Use explicit typing to avoid deep type instantiation
     const { data, error } = await supabase
       .from('platforms')
       .select('*')
@@ -174,7 +174,8 @@ export const searchPlatformsByFeature = async (feature: string): Promise<Platfor
       throw error;
     }
     
-    return data ? data.map(convertDbPlatformToPlatform) : [];
+    // Use explicit conversion to Platform[] to avoid type issues
+    return (data || []).map(convertDbPlatformToPlatform);
   } catch (error) {
     console.error('Error with feature search:', error);
     return [];
@@ -184,7 +185,7 @@ export const searchPlatformsByFeature = async (feature: string): Promise<Platfor
 // Free platform search - find platforms with free tier
 export const searchFreePlatforms = async (): Promise<Platform[]> => {
   try {
-    // Explicitly define the return type to avoid infinite recursion
+    // Use explicit typing to avoid deep type instantiation
     const { data, error } = await supabase
       .from('platforms')
       .select('*')
@@ -195,7 +196,8 @@ export const searchFreePlatforms = async (): Promise<Platform[]> => {
       throw error;
     }
     
-    return data ? data.map(convertDbPlatformToPlatform) : [];
+    // Use explicit conversion to Platform[] to avoid type issues
+    return (data || []).map(convertDbPlatformToPlatform);
   } catch (error) {
     console.error('Error with free platform search:', error);
     return [];
@@ -205,7 +207,7 @@ export const searchFreePlatforms = async (): Promise<Platform[]> => {
 // API availability search - find platforms with API
 export const searchPlatformsWithAPI = async (): Promise<Platform[]> => {
   try {
-    // Explicitly define the return type to avoid infinite recursion
+    // Use explicit typing to avoid deep type instantiation
     const { data, error } = await supabase
       .from('platforms')
       .select('*')
@@ -216,7 +218,8 @@ export const searchPlatformsWithAPI = async (): Promise<Platform[]> => {
       throw error;
     }
     
-    return data ? data.map(convertDbPlatformToPlatform) : [];
+    // Use explicit conversion to Platform[] to avoid type issues
+    return (data || []).map(convertDbPlatformToPlatform);
   } catch (error) {
     console.error('Error with API platform search:', error);
     return [];
