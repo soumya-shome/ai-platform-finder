@@ -274,13 +274,13 @@ const Directory = () => {
           </Link>
         </div>
         
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <SearchBar 
             onSearch={handleSearch} 
             initialQuery={query}
             placeholder="Search by description, features, or use case..."
           />
-        </div>
+        </div> */}
         
         <div className="mb-8">
           <h2 className="text-lg font-medium mb-3">Popular Categories</h2>
