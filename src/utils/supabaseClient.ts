@@ -1,5 +1,5 @@
 
-// Re-export from individual service files
+// Re-export from individual service files for a cleaner interface
 export { 
   getPlatforms,
   getPlatformById,
@@ -18,3 +18,9 @@ export {
 export {
   migrateDataToSupabase
 } from './migrationService';
+
+export {
+  getFlaggedReviews,
+  approveReview,
+  rejectReview
+} from './adminService';
