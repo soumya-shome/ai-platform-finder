@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Directory from "./pages/Directory";
 import PlatformPage from "./pages/PlatformPage";
+import SubmitPlatform from "./pages/SubmitPlatform";
 import NotFound from "./pages/NotFound";
 import DatabaseInitializer from "./components/DatabaseInitializer";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/directory" element={<Directory />} />
           <Route path="/platform/:id" element={<PlatformPage />} />
+          <Route path="/submit" element={<SubmitPlatform />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <DatabaseInitializer />

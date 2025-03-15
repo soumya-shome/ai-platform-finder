@@ -15,6 +15,15 @@ const PlatformPage = () => {
   const [similarPlatforms, setSimilarPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const fetchReviews = async (platformId: string) => {
+    try {
+      const reviewsData = await getReviewsByPlatformId(platformId);
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+  
   useEffect(() => {
     if (!id) {
       navigate('/directory');
@@ -41,8 +50,7 @@ const PlatformPage = () => {
         setPlatform(enhancedPlatform);
         
         // Fetch reviews for this platform
-        const reviewsData = await getReviewsByPlatformId(id);
-        setReviews(reviewsData);
+        await fetchReviews(id);
         
         // Get similar platforms (based on tags)
         const allPlatforms = await getPlatforms();
@@ -67,6 +75,12 @@ const PlatformPage = () => {
     
     fetchData();
   }, [id, navigate]);
+
+  const handleReviewAdded = () => {
+    if (id) {
+      fetchReviews(id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -145,7 +159,11 @@ const PlatformPage = () => {
         </div>
         
         <div className="my-12">
-          <ReviewSection reviews={reviews as any} platformId={platform.id} />
+          <ReviewSection 
+            reviews={reviews} 
+            platformId={platform.id} 
+            onReviewAdded={handleReviewAdded}
+          />
         </div>
         
         <div className="mt-16">

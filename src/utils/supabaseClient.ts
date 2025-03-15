@@ -1,4 +1,3 @@
-
 import { 
   Platform, 
   Review, 
@@ -75,6 +74,34 @@ export const getAllTags = async (): Promise<string[]> => {
   return Array.from(tagsSet);
 };
 
+export const addNewPlatform = async (platformData: Omit<Platform, 'id' | 'rating' | 'reviewCount'>): Promise<Platform | null> => {
+  const newPlatform: Omit<DbPlatform, 'id'> = {
+    name: platformData.name,
+    description: platformData.description,
+    logo: platformData.logo || null,
+    url: platformData.url,
+    tags: platformData.tags,
+    features: platformData.features,
+    pricing: platformData.pricing,
+    rating: 0,
+    reviewcount: 0,
+    apiavailable: platformData.apiAvailable
+  };
+  
+  const { data, error } = await supabase
+    .from('platforms')
+    .insert(newPlatform)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error adding platform:', error);
+    return null;
+  }
+  
+  return data ? convertDbPlatformToPlatform(data) : null;
+};
+
 // Review-related database operations
 export const getReviewsByPlatformId = async (platformId: string): Promise<Review[]> => {
   const { data, error } = await supabase
@@ -91,7 +118,6 @@ export const getReviewsByPlatformId = async (platformId: string): Promise<Review
 };
 
 export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>): Promise<Review | null> => {
-  // Create a complete DbReview object with required fields
   const dbReview: DbReview = {
     id: crypto.randomUUID(), // Generate a new UUID
     platformid: review.platformId,
@@ -102,18 +128,46 @@ export const addReview = async (review: Omit<Review, 'id' | 'date' | 'flagged'>)
     flagged: false
   };
   
-  const { data, error } = await supabase
+  const { data: reviewData, error: reviewError } = await supabase
     .from('reviews')
     .insert(dbReview)
     .select()
     .single();
   
-  if (error) {
-    console.error('Error adding review:', error);
+  if (reviewError) {
+    console.error('Error adding review:', reviewError);
     return null;
   }
   
-  return data ? convertDbReviewToReview(data) : null;
+  if (reviewData) {
+    try {
+      const { data: platformData } = await supabase
+        .from('platforms')
+        .select('rating, reviewcount')
+        .eq('id', review.platformId)
+        .single();
+      
+      if (platformData) {
+        const currentReviewCount = platformData.reviewcount;
+        const currentRating = platformData.rating;
+        
+        const newReviewCount = currentReviewCount + 1;
+        const newRating = ((currentRating * currentReviewCount) + review.rating) / newReviewCount;
+        
+        await supabase
+          .from('platforms')
+          .update({
+            rating: newRating,
+            reviewcount: newReviewCount
+          })
+          .eq('id', review.platformId);
+      }
+    } catch (err) {
+      console.error('Error updating platform rating:', err);
+    }
+  }
+  
+  return reviewData ? convertDbReviewToReview(reviewData) : null;
 };
 
 export const flagReview = async (reviewId: string): Promise<boolean> => {
@@ -136,19 +190,12 @@ export const migrateDataToSupabase = async (
   reviews: Review[]
 ): Promise<boolean> => {
   try {
-    // Convert Platform objects to DbPlatform objects
-    // IMPORTANT: Generate new UUIDs instead of using the string IDs from dummy data
     const dbPlatforms = platforms.map(platform => {
-      // Generate a new UUID for each platform
-      // const newId = crypto.randomUUID();
-      
       return {
-        // Don't send the original string ID - let Supabase generate a UUID
-        // id: undefined, 
         name: platform.name,
         description: platform.description,
         logo: platform.logo || null,
-        url: platform.url || platform.website || '', // Handle both url and website fields
+        url: platform.url || platform.website || '',
         tags: platform.tags,
         features: platform.features,
         pricing: platform.pricing,
@@ -158,7 +205,6 @@ export const migrateDataToSupabase = async (
       };
     });
     
-    // Insert platforms
     const { data: insertedPlatforms, error: platformsError } = await supabase
       .from('platforms')
       .insert(dbPlatforms)
@@ -169,7 +215,6 @@ export const migrateDataToSupabase = async (
       return false;
     }
     
-    // Create a mapping from old platform IDs to new UUIDs
     const platformIdMap = new Map<string, string>();
     
     platforms.forEach((oldPlatform, index) => {
@@ -178,7 +223,6 @@ export const migrateDataToSupabase = async (
       }
     });
     
-    // Convert Review objects to DbReview objects with updated platform IDs
     const dbReviews = reviews.map(review => {
       const newPlatformId = platformIdMap.get(review.platformId);
       
@@ -188,7 +232,6 @@ export const migrateDataToSupabase = async (
       }
       
       return {
-        // Don't send the original ID - let Supabase generate a UUID
         id: undefined,
         platformid: newPlatformId,
         username: review.userName,
@@ -204,7 +247,6 @@ export const migrateDataToSupabase = async (
       return true;
     }
     
-    // Insert reviews
     const { error: reviewsError } = await supabase
       .from('reviews')
       .insert(dbReviews);
@@ -220,4 +262,3 @@ export const migrateDataToSupabase = async (
     return false;
   }
 };
-
