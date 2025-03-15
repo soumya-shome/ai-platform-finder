@@ -140,11 +140,11 @@ export const migrateDataToSupabase = async (
     // IMPORTANT: Generate new UUIDs instead of using the string IDs from dummy data
     const dbPlatforms = platforms.map(platform => {
       // Generate a new UUID for each platform
-      const newId = crypto.randomUUID();
+      // const newId = crypto.randomUUID();
       
       return {
         // Don't send the original string ID - let Supabase generate a UUID
-        id: undefined, 
+        // id: undefined, 
         name: platform.name,
         description: platform.description,
         logo: platform.logo || null,
