@@ -9,7 +9,9 @@ import Directory from "./pages/Directory";
 import PlatformPage from "./pages/PlatformPage";
 import SubmitPlatform from "./pages/SubmitPlatform";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 import DatabaseInitializer from "./components/DatabaseInitializer";
+import { AdminProvider } from "./contexts/AdminContext";
 
 const queryClient = new QueryClient();
 
@@ -19,14 +21,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/directory" element={<Directory />} />
-          <Route path="/platform/:id" element={<PlatformPage />} />
-          <Route path="/submit" element={<SubmitPlatform />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <DatabaseInitializer />
+        <AdminProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/directory" element={<Directory />} />
+            <Route path="/platform/:id" element={<PlatformPage />} />
+            <Route path="/submit" element={<SubmitPlatform />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <DatabaseInitializer />
+        </AdminProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
