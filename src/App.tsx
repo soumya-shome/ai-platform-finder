@@ -10,6 +10,7 @@ import PlatformPage from "./pages/PlatformPage";
 import SubmitPlatform from "./pages/SubmitPlatform";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 import DatabaseInitializer from "./components/DatabaseInitializer";
 import { AdminProvider } from "./contexts/AdminContext";
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/platform/:id" element={<PlatformPage />} />
             <Route path="/submit" element={<SubmitPlatform />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/login" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <DatabaseInitializer />

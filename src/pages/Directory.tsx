@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
@@ -9,6 +9,8 @@ import { searchPlatforms } from '@/utils/searchUtils';
 import { getPlatformsByTag, getAllTags, getPlatforms, searchPlatformsDatabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type EnhancedPlatform = Platform;
 
@@ -257,11 +259,19 @@ const Directory = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">AI Platform Directory</h1>
-          <p className="text-muted-foreground">
-            Discover and compare AI platforms to find the perfect solution for your needs.
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">AI Platform Directory</h1>
+            <p className="text-muted-foreground">
+              Discover and compare AI platforms to find the perfect solution for your needs.
+            </p>
+          </div>
+          <Link to="/submit">
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add New Platform
+            </Button>
+          </Link>
         </div>
         
         <div className="mb-8">
