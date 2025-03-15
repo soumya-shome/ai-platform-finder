@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Review } from '@/types/supabase';
 import Rating from './Rating';
 import ReviewForm from './ReviewForm';
-import { flagReview } from '@/utils/supabaseClient';
+import { flagReview } from '@/utils/reviewService'; // Updated import from reviewService
 import { useToast } from '@/hooks/use-toast';
 
 interface ReviewSectionProps {

@@ -1,10 +1,9 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { addReview } from "@/utils/supabaseClient";
+import { addReview } from "@/utils/reviewService";
 import Rating from "./Rating";
 import { Button } from "./ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
@@ -12,7 +11,6 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Alert, AlertDescription } from "./ui/alert";
 
-// Define form validation schema
 const reviewFormSchema = z.object({
   userName: z.string().min(2, "Name must be at least 2 characters"),
   rating: z.number().min(1, "Please select a rating").max(5),
