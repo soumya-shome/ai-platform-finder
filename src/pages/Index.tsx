@@ -35,15 +35,26 @@ const Index = () => {
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950"></div>
         
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Discover the Perfect
-            <span className="text-primary ml-2">AI Platform</span>
-          </h1>
-          <p className="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
-            Find the ideal AI solution based on your unique needs.
-          </p>
-
-          <div className="mt-8">
+        <div className="animate-fade-in">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Discover the Perfect
+              <span className="text-primary ml-2">AI Platform</span>
+            </h1>
+            <p className="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
+              Find the ideal AI solution based on your unique needs with our
+              natural language search.
+            </p>
+          </div>
+          
+          <div className="mt-10 animate-slide-in flex justify-center">
+            <SearchBar 
+              size="lg"
+              placeholder="Describe what you're looking for in plain language..."
+              autofocus={true}
+            />
+          </div>
+          
+          <div className="mt-8 animate-fade-in">
             <p className="text-sm text-muted-foreground mb-3">Popular categories:</p>
             <div className="flex flex-wrap justify-center gap-2">
               {/* Replace static tags with dynamic tags if available */}
