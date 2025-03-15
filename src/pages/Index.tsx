@@ -5,6 +5,7 @@ import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
 import TagBadge from '@/components/TagBadge';
 import {  getPlatforms } from '@/utils/supabaseClient';
+import { Analytics } from '@vercel/analytics/next';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
+      <Analytics />
       {/* Featured Platforms Section */}
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
