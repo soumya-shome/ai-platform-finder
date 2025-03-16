@@ -6,7 +6,6 @@ import { Platform } from '@/types/supabase';
 import { getPlatformById } from '@/utils/platformService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import Rating from '@/components/Rating';
 import TagBadge from '@/components/TagBadge';
@@ -25,11 +24,19 @@ const ComparePlatforms = () => {
         
         if (ids.length === 0) {
           setPlatforms([]);
+          setIsLoading(false);
           return;
         }
         
         const platformsData = await Promise.all(
-          ids.map(id => getPlatformById(id))
+          ids.map(async (id) => {
+            try {
+              return await getPlatformById(id);
+            } catch (error) {
+              console.error(`Error fetching platform with id ${id}:`, error);
+              return null;
+            }
+          })
         );
         
         // Filter out null values
@@ -154,12 +161,12 @@ const ComparePlatforms = () => {
               <div key={`${platform.id}-pricing`} className="text-center">
                 <div>
                   {platform.pricing.hasFree && "Free Tier"}
-                  {platform.pricing.hasFree && platform.pricing.hasPaid && " / "}
-                  {platform.pricing.hasPaid && "Paid Plans"}
+                  {platform.pricing.hasFree && platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && " / "}
+                  {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && "Paid Plans"}
                 </div>
-                {platform.pricing.startingPrice && (
+                {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && (
                   <div className="text-sm text-muted-foreground">
-                    From {platform.pricing.startingPrice}
+                    From {platform.pricing.paidPlans[0].price}
                   </div>
                 )}
               </div>

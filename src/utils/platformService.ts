@@ -1,10 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Platform, 
   convertDbPlatformToPlatform,
-  convertDummyPlatformToPlatform,
   convertPlatformToDbPlatform
 } from '@/types/supabase';
+import { getReviewsByPlatformId } from './reviewService';
 
 // Platform-related database operations
 export const getPlatforms = async (): Promise<Platform[]> => {
@@ -17,7 +18,21 @@ export const getPlatforms = async (): Promise<Platform[]> => {
     throw error;
   }
   
-  return data ? data.map(convertDbPlatformToPlatform) : [];
+  const platforms = data ? data.map(convertDbPlatformToPlatform) : [];
+  
+  // Update each platform with accurate review data
+  const updatedPlatforms = await Promise.all(
+    platforms.map(async (platform) => {
+      const reviewData = await calculatePlatformReviewData(platform.id);
+      return {
+        ...platform,
+        rating: reviewData.averageRating,
+        reviewCount: reviewData.reviewCount
+      };
+    })
+  );
+  
+  return updatedPlatforms;
 };
 
 export const getPlatformById = async (id: string): Promise<Platform | null> => {
@@ -32,7 +47,17 @@ export const getPlatformById = async (id: string): Promise<Platform | null> => {
     return null;
   }
   
-  return data ? convertDbPlatformToPlatform(data) : null;
+  if (!data) return null;
+  
+  const platform = convertDbPlatformToPlatform(data);
+  
+  // Update with accurate review data
+  const reviewData = await calculatePlatformReviewData(id);
+  return {
+    ...platform,
+    rating: reviewData.averageRating,
+    reviewCount: reviewData.reviewCount
+  };
 };
 
 export const getPlatformsByTag = async (tag: string): Promise<Platform[]> => {
@@ -46,7 +71,21 @@ export const getPlatformsByTag = async (tag: string): Promise<Platform[]> => {
     return [];
   }
   
-  return data ? data.map(convertDbPlatformToPlatform) : [];
+  const platforms = data ? data.map(convertDbPlatformToPlatform) : [];
+  
+  // Update each platform with accurate review data
+  const updatedPlatforms = await Promise.all(
+    platforms.map(async (platform) => {
+      const reviewData = await calculatePlatformReviewData(platform.id);
+      return {
+        ...platform,
+        rating: reviewData.averageRating,
+        reviewCount: reviewData.reviewCount
+      };
+    })
+  );
+  
+  return updatedPlatforms;
 };
 
 export const getAllTags = async (): Promise<string[]> => {
@@ -95,7 +134,7 @@ export const addNewPlatform = async (platformData: Omit<Platform, 'id' | 'rating
   return data ? convertDbPlatformToPlatform(data) : null;
 };
 
-// New function to update a platform
+// Function to update a platform
 export const updatePlatform = async (id: string, platformData: Platform): Promise<boolean> => {
   const dbPlatform = convertPlatformToDbPlatform({
     ...platformData,
@@ -118,6 +157,24 @@ export const updatePlatform = async (id: string, platformData: Platform): Promis
   }
   
   return true;
+};
+
+// Helper function to calculate platform rating and review count from reviews
+export const calculatePlatformReviewData = async (platformId: string): Promise<{ averageRating: number; reviewCount: number }> => {
+  const reviews = await getReviewsByPlatformId(platformId);
+  
+  if (reviews.length === 0) {
+    return { averageRating: 0, reviewCount: 0 };
+  }
+  
+  // Calculate average rating
+  const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = totalRating / reviews.length;
+  
+  return {
+    averageRating: Number(averageRating.toFixed(1)),
+    reviewCount: reviews.length
+  };
 };
 
 // Export for searchPlatformsDatabase from searchUtils

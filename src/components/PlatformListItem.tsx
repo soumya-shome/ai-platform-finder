@@ -78,8 +78,8 @@ const PlatformListItem: React.FC<PlatformListItemProps> = ({ platform, className
           <div>
             <span className="text-muted-foreground">
               {platform.pricing.hasFree && "Free"} 
-              {platform.pricing.hasFree && platform.pricing.hasPaid && " / "} 
-              {platform.pricing.hasPaid && "Paid"}
+              {platform.pricing.hasFree && platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && " / "} 
+              {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && "Paid"}
             </span>
           </div>
         </div>

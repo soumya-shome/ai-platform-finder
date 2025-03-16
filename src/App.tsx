@@ -13,7 +13,6 @@ import EditPlatform from "./pages/EditPlatform";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
-// import DatabaseInitializer from "./components/DatabaseInitializer";
 import { AdminProvider } from "./contexts/AdminContext";
 import { CompareProvider } from "./components/PlatformCompare";
 
@@ -38,7 +37,6 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            {/* <DatabaseInitializer /> */}
           </CompareProvider>
         </AdminProvider>
       </BrowserRouter>

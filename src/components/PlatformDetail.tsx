@@ -37,8 +37,9 @@ const PlatformDetail: React.FC<PlatformDetailProps> = ({ platform }) => {
             </div>
             <div className="text-sm text-muted-foreground">
               {platform.pricing.hasFree && "Free"}
-              {platform.pricing.hasFree && platform.pricing.hasPaid && " / "}
-              {platform.pricing.hasPaid && `Paid ${platform.pricing.startingPrice ? `(from ${platform.pricing.startingPrice})` : ''}`}
+              {platform.pricing.hasFree && platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && " / "}
+              {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && 
+                `Paid ${platform.pricing.paidPlans[0]?.price ? `(from ${platform.pricing.paidPlans[0].price})` : ''}`}
             </div>
           </div>
         </div>
@@ -134,15 +135,15 @@ const PlatformDetail: React.FC<PlatformDetailProps> = ({ platform }) => {
                       Free Tier
                     </span>
                   )}
-                  {platform.pricing.hasPaid && (
+                  {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && (
                     <span className="px-2 py-1 rounded-md text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
                       Paid Options
                     </span>
                   )}
                 </div>
-                {platform.pricing.startingPrice && (
+                {platform.pricing.paidPlans && platform.pricing.paidPlans.length > 0 && platform.pricing.paidPlans[0]?.price && (
                   <div className="mt-2 text-sm">
-                    Starting from <span className="font-medium">{platform.pricing.startingPrice}</span>
+                    Starting from <span className="font-medium">{platform.pricing.paidPlans[0].price}</span>
                   </div>
                 )}
               </div>
