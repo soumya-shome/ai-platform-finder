@@ -1,14 +1,20 @@
 
 import React from 'react';
-import { Platform } from '@/utils/dummyData';
+import { Platform } from '@/types/supabase';
 import TagBadge from './TagBadge';
 import Rating from './Rating';
+import { Button } from './ui/button';
+import { useCompare } from './PlatformCompare';
+import { ExternalLink, GitCompare, Check } from 'lucide-react';
 
 interface PlatformDetailProps {
   platform: Platform;
 }
 
 const PlatformDetail: React.FC<PlatformDetailProps> = ({ platform }) => {
+  const { addToCompare, isInCompare } = useCompare();
+  const inCompareList = isInCompare(platform.id);
+  
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -39,46 +45,33 @@ const PlatformDetail: React.FC<PlatformDetailProps> = ({ platform }) => {
         
         <div className="flex space-x-3">
           <a
-            href={platform.website}
+            href={platform.url}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
           >
             Visit Website
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 ml-1"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M7 17L17 7"></path>
-              <path d="M7 7h10v10"></path>
-            </svg>
+            <ExternalLink className="h-4 w-4 ml-1" />
           </a>
-          <button
+          
+          <Button
             type="button"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+            variant="outline"
+            onClick={() => addToCompare(platform)}
+            className={inCompareList ? "text-green-600 border-green-600" : ""}
           >
-            Compare
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 ml-1"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="21 8 21 21 3 21 3 8"></polyline>
-              <rect x="1" y="3" width="22" height="5"></rect>
-              <line x1="10" y1="12" x2="14" y2="12"></line>
-            </svg>
-          </button>
+            {inCompareList ? (
+              <>
+                <Check className="h-4 w-4 mr-1" />
+                Added to Compare
+              </>
+            ) : (
+              <>
+                <GitCompare className="h-4 w-4 mr-1" />
+                Add to Compare
+              </>
+            )}
+          </Button>
         </div>
       </div>
       

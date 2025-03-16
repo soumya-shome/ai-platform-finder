@@ -7,12 +7,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Directory from "./pages/Directory";
 import PlatformPage from "./pages/PlatformPage";
+import ComparePlatforms from "./pages/ComparePlatforms";
 import SubmitPlatform from "./pages/SubmitPlatform";
+import EditPlatform from "./pages/EditPlatform";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 // import DatabaseInitializer from "./components/DatabaseInitializer";
 import { AdminProvider } from "./contexts/AdminContext";
+import { CompareProvider } from "./components/PlatformCompare";
 
 const queryClient = new QueryClient();
 
@@ -23,16 +26,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AdminProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/directory" element={<Directory />} />
-            <Route path="/platform/:id" element={<PlatformPage />} />
-            <Route path="/submit" element={<SubmitPlatform />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          {/* <DatabaseInitializer /> */}
+          <CompareProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/directory" element={<Directory />} />
+              <Route path="/platform/:id" element={<PlatformPage />} />
+              <Route path="/compare" element={<ComparePlatforms />} />
+              <Route path="/submit" element={<SubmitPlatform />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/edit-platform/:id" element={<EditPlatform />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            {/* <DatabaseInitializer /> */}
+          </CompareProvider>
         </AdminProvider>
       </BrowserRouter>
     </TooltipProvider>

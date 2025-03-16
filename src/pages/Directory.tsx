@@ -3,32 +3,47 @@ import { useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
+import PlatformListItem from '@/components/PlatformListItem';
+import PlatformCompare from '@/components/PlatformCompare';
 import TagBadge from '@/components/TagBadge';
-import { Platform, convertDummyPlatformToPlatform } from '@/types/supabase';
-import { searchPlatforms } from '@/utils/searchUtils';
-import { getPlatformsByTag, getAllTags, getPlatforms, searchPlatformsDatabase } from '@/utils/supabaseClient';
+import { Platform } from '@/types/supabase';
+import { searchPlatformsDatabase } from '@/utils/searchUtils';
+import { getPlatformsByTag, getAllTags, getPlatforms } from '@/utils/platformService';
 import { useToast } from '@/components/ui/use-toast';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+import { 
+  ToggleGroup, 
+  ToggleGroupItem 
+} from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, LayoutGrid, List } from "lucide-react";
 
-type EnhancedPlatform = Platform;
+type ViewMode = 'grid' | 'list';
 
 const Directory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const initialTag = searchParams.get('tag') || '';
   const currentPage = parseInt(searchParams.get('page') || '1');
+  const initialViewMode = (searchParams.get('view') || 'grid') as ViewMode;
   
   const [query, setQuery] = useState(initialQuery);
   const [selectedTag, setSelectedTag] = useState(initialTag);
-  const [filteredPlatforms, setFilteredPlatforms] = useState<EnhancedPlatform[]>([]);
+  const [filteredPlatforms, setFilteredPlatforms] = useState<Platform[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [useDatabase, setUseDatabase] = useState(true);
   const [totalPlatforms, setTotalPlatforms] = useState(0);
   const [page, setPage] = useState(currentPage);
-  const platformsPerPage = 9;
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const platformsPerPage = viewMode === 'grid' ? 9 : 6;
 
   const { toast } = useToast();
   
@@ -64,6 +79,7 @@ const Directory = () => {
     setQuery(initialQuery);
     setSelectedTag(initialTag);
     setPage(currentPage);
+    setViewMode(initialViewMode);
     
     const loadPlatforms = async () => {
       setIsSearching(true);
@@ -86,7 +102,6 @@ const Directory = () => {
           const endIdx = startIdx + platformsPerPage;
           setFilteredPlatforms(results.slice(startIdx, endIdx));
         } else {
-          // Fallback to local data
           const { platforms } = await import('@/utils/dummyData');
           
           if (initialTag) {
@@ -111,8 +126,8 @@ const Directory = () => {
         console.error('Error loading platforms:', error);
         setUseDatabase(false);
         
-        // Fallback to local data
-        const { platforms, filterPlatformsByTag } = await import('@/utils/dummyData');
+        const { platforms } = await import('@/utils/dummyData');
+        const { filterPlatformsByTag } = await import('@/utils/dummyData');
         
         if (initialTag) {
           const results = filterPlatformsByTag(initialTag);
@@ -139,7 +154,7 @@ const Directory = () => {
     };
     
     loadPlatforms();
-  }, [initialQuery, initialTag, currentPage, useDatabase, toast]);
+  }, [initialQuery, initialTag, currentPage, initialViewMode, useDatabase, toast]);
   
   const handleSearch = async (searchQuery: string) => {
     setIsSearching(true);
@@ -249,9 +264,24 @@ const Directory = () => {
     const params: { [key: string]: string } = { page: newPage.toString() };
     if (query) params.q = query;
     if (selectedTag) params.tag = selectedTag;
+    if (viewMode) params.view = viewMode;
     setSearchParams(params);
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    if (mode) {
+      setViewMode(mode);
+      
+      const params: { [key: string]: string } = { view: mode };
+      if (query) params.q = query;
+      if (selectedTag) params.tag = selectedTag;
+      params.page = '1';
+      setSearchParams(params);
+      
+      setPage(1);
+    }
   };
 
   const totalPages = Math.ceil(totalPlatforms / platformsPerPage);
@@ -296,7 +326,7 @@ const Directory = () => {
           </div>
         </div>
         
-        <div className="mb-4 flex justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <h2 className="text-lg font-medium">
             {query && `Search results for "${query}"`}
             {selectedTag && `Platforms in "${selectedTag}"`}
@@ -306,47 +336,83 @@ const Directory = () => {
             </span>
           </h2>
           
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground">Sort by:</span>
-            <select
-              className="text-sm bg-transparent border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="relevance">Relevance</option>
-              <option value="rating">Highest Rated</option>
-              <option value="reviews">Most Reviewed</option>
-            </select>
+          <div className="flex items-center gap-4">
+            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => handleViewModeChange(value as ViewMode)}>
+              <ToggleGroupItem value="grid" aria-label="Grid view">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List view">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Sort by:</span>
+              <select
+                className="text-sm bg-transparent border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="rating">Highest Rated</option>
+                <option value="reviews">Most Reviewed</option>
+              </select>
+            </div>
           </div>
         </div>
         
         {isSearching ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="h-64 rounded-xl border border-border bg-white dark:bg-gray-900 shadow-sm animate-pulse">
-                <div className="p-6 space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 rounded-md bg-gray-200 dark:bg-gray-700"></div>
-                    <div className="space-y-2 flex-1">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <div key={item} className="h-64 rounded-xl border border-border bg-white dark:bg-gray-900 shadow-sm animate-pulse">
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-12 w-12 rounded-md bg-gray-200 dark:bg-gray-700"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                    <div className="flex space-x-2">
+                      <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                     </div>
                   </div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                  <div className="flex space-x-2">
-                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredPlatforms.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPlatforms.map((platform) => (
-                <PlatformCard key={platform.id} platform={platform as any} />
               ))}
             </div>
+          ) : (
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="h-32 rounded-xl border border-border bg-white dark:bg-gray-900 shadow-sm animate-pulse">
+                  <div className="p-6 flex items-start space-x-4">
+                    <div className="h-12 w-12 rounded-md bg-gray-200 dark:bg-gray-700"></div>
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : filteredPlatforms.length > 0 ? (
+          <>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPlatforms.map((platform) => (
+                  <PlatformCard key={platform.id} platform={platform} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredPlatforms.map((platform) => (
+                  <PlatformListItem key={platform.id} platform={platform} />
+                ))}
+              </div>
+            )}
             
             {totalPages > 1 && (
               <Pagination className="mt-8">
@@ -422,8 +488,7 @@ const Directory = () => {
                   });
                 } else {
                   import('@/utils/dummyData').then(({ platforms }) => {
-                    const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
-                    setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
+                    setFilteredPlatforms(platforms.slice(0, platformsPerPage));
                     setTotalPlatforms(platforms.length);
                   });
                 }
@@ -436,6 +501,8 @@ const Directory = () => {
           </div>
         )}
       </div>
+      
+      <PlatformCompare />
     </Layout>
   );
 };

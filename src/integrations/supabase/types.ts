@@ -122,6 +122,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      search_platforms_by_tag: {
+        Args: {
+          search_tag: string
+        }
+        Returns: {
+          apiavailable: boolean
+          created_at: string | null
+          description: string
+          features: string[]
+          id: string
+          logo: string | null
+          name: string
+          pricing: Json
+          rating: number
+          reviewcount: number
+          tags: string[]
+          url: string
+        }[]
+      }
       verify_review: {
         Args: {
           review_id: string

@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { RequireAdmin } from '@/contexts/AdminContext';
-import { Review } from '@/types/supabase';
+import { Review, Platform } from '@/types/supabase';
 import { getFlaggedReviews, approveReview, rejectReview } from '@/utils/adminService';
+import { getPlatforms } from '@/utils/platformService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { 
@@ -15,17 +16,21 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Shield, CheckCircle, XCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, CheckCircle, XCircle, Edit, Pencil, Database } from 'lucide-react';
 import Rating from '@/components/Rating';
+import { Link } from 'react-router-dom';
 
 const AdminPage = () => {
   const [flaggedReviews, setFlaggedReviews] = useState<(Review & { platformName?: string })[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true);
   const { toast } = useToast();
 
   const loadFlaggedReviews = async () => {
     try {
-      setIsLoading(true);
+      setIsLoadingReviews(true);
       const reviews = await getFlaggedReviews();
       setFlaggedReviews(reviews);
     } catch (error) {
@@ -36,12 +41,30 @@ const AdminPage = () => {
         description: "Failed to load flagged reviews",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingReviews(false);
+    }
+  };
+
+  const loadPlatforms = async () => {
+    try {
+      setIsLoadingPlatforms(true);
+      const data = await getPlatforms();
+      setPlatforms(data);
+    } catch (error) {
+      console.error('Error loading platforms:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load platforms",
+      });
+    } finally {
+      setIsLoadingPlatforms(false);
     }
   };
 
   useEffect(() => {
     loadFlaggedReviews();
+    loadPlatforms();
   }, []);
 
   const handleApproveReview = async (reviewId: string) => {
@@ -105,70 +128,140 @@ const AdminPage = () => {
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Flagged Reviews</h2>
+          <Tabs defaultValue="reviews" className="w-full mb-8">
+            <TabsList className="mb-6">
+              <TabsTrigger value="reviews">Flagged Reviews</TabsTrigger>
+              <TabsTrigger value="platforms">Manage Platforms</TabsTrigger>
+            </TabsList>
             
-            {isLoading ? (
-              <div className="p-8 text-center">Loading flagged reviews...</div>
-            ) : flaggedReviews.length === 0 ? (
-              <div className="p-8 text-center border rounded-lg bg-muted/20">
-                <p className="text-muted-foreground">No flagged reviews found</p>
-              </div>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableCaption>List of reviews that have been flagged by users</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Platform</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead className="w-[350px]">Comment</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {flaggedReviews.map((review) => (
-                      <TableRow key={review.id}>
-                        <TableCell className="font-medium">{review.userName}</TableCell>
-                        <TableCell>{review.platformName}</TableCell>
-                        <TableCell>
-                          <Rating value={review.rating} />
-                        </TableCell>
-                        <TableCell className="max-w-[350px] truncate">
-                          {review.comment}
-                        </TableCell>
-                        <TableCell>{new Date(review.date).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleApproveReview(review.id)}
-                              className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRejectReview(review.id)}
-                              className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
+            <TabsContent value="reviews">
+              <h2 className="text-2xl font-semibold mb-4">Flagged Reviews</h2>
+              
+              {isLoadingReviews ? (
+                <div className="p-8 text-center">Loading flagged reviews...</div>
+              ) : flaggedReviews.length === 0 ? (
+                <div className="p-8 text-center border rounded-lg bg-muted/20">
+                  <p className="text-muted-foreground">No flagged reviews found</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableCaption>List of reviews that have been flagged by users</TableCaption>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Platform</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead className="w-[350px]">Comment</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {flaggedReviews.map((review) => (
+                        <TableRow key={review.id}>
+                          <TableCell className="font-medium">{review.userName}</TableCell>
+                          <TableCell>{review.platformName}</TableCell>
+                          <TableCell>
+                            <Rating value={review.rating} />
+                          </TableCell>
+                          <TableCell className="max-w-[350px] truncate">
+                            {review.comment}
+                          </TableCell>
+                          <TableCell>{new Date(review.date).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleApproveReview(review.id)}
+                                className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRejectReview(review.id)}
+                                className="text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="platforms">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Manage Platforms</h2>
+                <Link to="/submit">
+                  <Button>
+                    <Database className="h-4 w-4 mr-2" />
+                    Add New Platform
+                  </Button>
+                </Link>
               </div>
-            )}
-          </div>
+              
+              {isLoadingPlatforms ? (
+                <div className="p-8 text-center">Loading platforms...</div>
+              ) : platforms.length === 0 ? (
+                <div className="p-8 text-center border rounded-lg bg-muted/20">
+                  <p className="text-muted-foreground">No platforms found</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableCaption>List of all platforms in the database</TableCaption>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Reviews</TableHead>
+                        <TableHead>Tags</TableHead>
+                        <TableHead>API</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {platforms.map((platform) => (
+                        <TableRow key={platform.id}>
+                          <TableCell className="font-medium">{platform.name}</TableCell>
+                          <TableCell>
+                            <Rating value={platform.rating} />
+                          </TableCell>
+                          <TableCell>{platform.reviewCount}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {platform.tags.join(', ')}
+                          </TableCell>
+                          <TableCell>
+                            {platform.apiAvailable ? 'Yes' : 'No'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Link to={`/admin/edit-platform/${platform.id}`}>
+                                <Button variant="outline" size="sm">
+                                  <Pencil className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </Layout>
     </RequireAdmin>

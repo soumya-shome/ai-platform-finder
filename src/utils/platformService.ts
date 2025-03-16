@@ -1,9 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Platform, 
   convertDbPlatformToPlatform,
-  convertDummyPlatformToPlatform
+  convertDummyPlatformToPlatform,
+  convertPlatformToDbPlatform
 } from '@/types/supabase';
 
 // Platform-related database operations
@@ -93,6 +93,31 @@ export const addNewPlatform = async (platformData: Omit<Platform, 'id' | 'rating
   }
   
   return data ? convertDbPlatformToPlatform(data) : null;
+};
+
+// New function to update a platform
+export const updatePlatform = async (id: string, platformData: Platform): Promise<boolean> => {
+  const dbPlatform = convertPlatformToDbPlatform({
+    ...platformData,
+    id // Ensure we're using the correct ID
+  });
+  
+  // Remove fields that shouldn't be updated directly
+  delete dbPlatform.created_at;
+  delete dbPlatform.rating;
+  delete dbPlatform.reviewcount;
+  
+  const { error } = await supabase
+    .from('platforms')
+    .update(dbPlatform)
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error updating platform:', error);
+    return false;
+  }
+  
+  return true;
 };
 
 // Export for searchPlatformsDatabase from searchUtils

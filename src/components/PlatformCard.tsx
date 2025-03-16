@@ -1,10 +1,13 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Platform } from '@/utils/dummyData';
+import { Platform } from '@/types/supabase';
 import TagBadge from './TagBadge';
 import Rating from './Rating';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import { PlusCircle, Check } from 'lucide-react';
+import { useCompare } from './PlatformCompare';
 
 interface PlatformCardProps {
   platform: Platform;
@@ -13,15 +16,15 @@ interface PlatformCardProps {
 }
 
 const PlatformCard: React.FC<PlatformCardProps> = ({ platform, className, compact = false }) => {
+  const { addToCompare, isInCompare } = useCompare();
+  const inCompareList = isInCompare(platform.id);
+  
   return (
-    <Link
-      to={`/platform/${platform.id}`}
-      className={cn(
-        "group block rounded-xl overflow-hidden border border-border bg-white dark:bg-gray-900 shadow-smooth",
-        className
-      )}
-    >
-      <div className="p-6">
+    <div className={cn(
+      "group rounded-xl overflow-hidden border border-border bg-white dark:bg-gray-900 shadow-smooth",
+      className
+    )}>
+      <Link to={`/platform/${platform.id}`} className="block p-6">
         <div className="flex items-center space-x-4">
           <div className="relative h-12 w-12 flex-shrink-0 rounded-md overflow-hidden border border-border bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
             <img
@@ -45,7 +48,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({ platform, className, compac
         </div>
         
         <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-          {platform.shortDescription}
+          {platform.description}
         </p>
         
         {!compact && (
@@ -82,8 +85,32 @@ const PlatformCard: React.FC<PlatformCardProps> = ({ platform, className, compac
             </div>
           </>
         )}
+      </Link>
+      
+      <div className="px-6 pb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "w-full",
+            inCompareList ? "text-green-600 border-green-600" : ""
+          )}
+          onClick={() => addToCompare(platform)}
+        >
+          {inCompareList ? (
+            <>
+              <Check className="mr-1 h-4 w-4" />
+              Added to Compare
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-1 h-4 w-4" />
+              Add to Compare
+            </>
+          )}
+        </Button>
       </div>
-    </Link>
+    </div>
   );
 };
 
