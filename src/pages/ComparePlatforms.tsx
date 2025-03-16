@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Platform } from '@/types/supabase';
-import { getPlatformById,getPlatformsByIds } from '@/utils/platformService';
+import {getPlatformsByIds } from '@/utils/platformService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import Rating from '@/components/Rating';
 import TagBadge from '@/components/TagBadge';
 
 const ComparePlatforms = () => {
@@ -19,17 +18,16 @@ const ComparePlatforms = () => {
 
   useEffect(() => {
     let isMounted = true; // Prevents setting state if component unmounts
+
     const loadPlatforms = async () => {
       try {
-        // setIsLoading(true);
-  
-        // if (ids.length === 0) {
-        //   setPlatforms([]);
-        //   return;
-        // }
-  
+        if (platforms.length > 0) {
+          setIsLoading(false);
+          return;
+        }
+
         const platformsData = await getPlatformsByIds(ids);
-  
+
         if (isMounted) {
           setPlatforms(platformsData);
         }
@@ -44,16 +42,13 @@ const ComparePlatforms = () => {
         if (isMounted) setIsLoading(false);
       }
     };
-  
+
     loadPlatforms();
-  
+
     return () => {
       isMounted = false; // Cleanup to prevent state updates on unmounted component
     };
-  }, [ids]); // Remove `toast` from dependencies
-  
-  
-  
+  }, [ids, platforms, toast]);
 
   if (isLoading) {
     return (
@@ -110,21 +105,6 @@ const ComparePlatforms = () => {
           </div>
           
           <Separator className="mb-6" />
-          
-          {/* Basic info */}
-          {/* <div className="grid grid-cols-[200px_repeat(auto-fill,minmax(200px,1fr))] gap-4 mb-4">
-            <div className="font-semibold">Rating</div>
-            {platforms.map(platform => (
-              <div key={`${platform.id}-rating`} className="text-center">
-                <div className="flex justify-center">
-                  <Rating value={platform.rating} />
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  ({platform.reviewCount} reviews)
-                </div>
-              </div>
-            ))}
-          </div> */}
           
           <div className="grid grid-cols-[200px_repeat(auto-fill,minmax(200px,1fr))] gap-4 mb-4">
             <div className="font-semibold">Tags</div>

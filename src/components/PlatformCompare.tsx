@@ -59,13 +59,10 @@ export const CompareProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addToCompare = (platform: Platform) => {
     setCompareList(prev => {
-      // Check if already in list
       if (prev.some(p => p.id === platform.id)) {
-        return prev;
+        return prev.filter(p => p.id !== platform.id);
       }
-      // Limit to 4 platforms for comparison
       if (prev.length >= 4) {
-        // Remove the first item if we already have 4
         return [...prev.slice(1), platform];
       }
       return [...prev, platform];
