@@ -1,4 +1,3 @@
-
 export interface Platform {
   id: string;
   name: string;
@@ -11,6 +10,8 @@ export interface Platform {
   pricing: {
     hasFree: boolean;
     freeDescription?: string;
+    hasPaid?: boolean; // Adding this property
+    startingPrice?: string; // Adding this property
     paidPlans?: {
       name: string;
       price: string;
