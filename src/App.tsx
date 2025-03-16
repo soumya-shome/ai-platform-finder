@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import { AdminProvider } from "./contexts/AdminContext";
 import { CompareProvider } from "./components/PlatformCompare";
+import DatabaseInitializer from "./components/DatabaseInitializer";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <DatabaseInitializer />
           </CompareProvider>
         </AdminProvider>
       </BrowserRouter>

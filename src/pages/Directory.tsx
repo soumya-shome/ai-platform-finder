@@ -39,7 +39,6 @@ const Directory = () => {
   const [filteredPlatforms, setFilteredPlatforms] = useState<Platform[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [useDatabase, setUseDatabase] = useState(true);
   const [totalPlatforms, setTotalPlatforms] = useState(0);
   const [page, setPage] = useState(currentPage);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
@@ -54,7 +53,6 @@ const Directory = () => {
         if (dbTags.length > 0) {
           setAvailableTags(dbTags);
         } else {
-          setUseDatabase(false);
           toast({
             title: "Database not initialized",
             description: "Please initialize the database with the button at the bottom-right",
@@ -63,7 +61,6 @@ const Directory = () => {
         }
       } catch (error) {
         console.error('Error loading tags:', error);
-        setUseDatabase(false);
         toast({
           title: "Database connection issue",
           description: "Please initialize the database with the button at the bottom-right",
@@ -85,76 +82,39 @@ const Directory = () => {
       setIsSearching(true);
       
       try {
-        if (useDatabase) {
-          let results: Platform[] = [];
-          
-          if (initialTag) {
-            results = await getPlatformsByTag(initialTag);
-          } else if (initialQuery) {
-            results = await searchPlatformsDatabase(initialQuery);
-          } else {
-            results = await getPlatforms();
-          }
-          
-          setTotalPlatforms(results.length);
-          
-          const startIdx = (currentPage - 1) * platformsPerPage;
-          const endIdx = startIdx + platformsPerPage;
-          setFilteredPlatforms(results.slice(startIdx, endIdx));
-        } else {
-          const { platforms } = await import('@/utils/dummyData');
-          
-          if (initialTag) {
-            const { filterPlatformsByTag } = await import('@/utils/dummyData');
-            const results = filterPlatformsByTag(initialTag);
-            const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-            setFilteredPlatforms(enhancedResults);
-            setTotalPlatforms(results.length);
-          } else if (initialQuery) {
-            const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-            const results = searchLocalPlatforms(platforms, initialQuery);
-            const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-            setFilteredPlatforms(enhancedResults);
-            setTotalPlatforms(results.length);
-          } else {
-            const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
-            setFilteredPlatforms(enhancedResults);
-            setTotalPlatforms(platforms.length);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading platforms:', error);
-        setUseDatabase(false);
-        
-        const { platforms } = await import('@/utils/dummyData');
-        const { filterPlatformsByTag } = await import('@/utils/dummyData');
+        let results: Platform[] = [];
         
         if (initialTag) {
-          const results = filterPlatformsByTag(initialTag);
-          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-          setFilteredPlatforms(enhancedResults);
+          results = await getPlatformsByTag(initialTag);
         } else if (initialQuery) {
-          const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-          const results = searchLocalPlatforms(platforms, initialQuery);
-          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-          setFilteredPlatforms(enhancedResults);
+          results = await searchPlatformsDatabase(initialQuery);
         } else {
-          const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
-          setFilteredPlatforms(enhancedResults);
+          results = await getPlatforms();
         }
         
+        setTotalPlatforms(results.length);
+        
+        const startIdx = (currentPage - 1) * platformsPerPage;
+        const endIdx = startIdx + platformsPerPage;
+        setFilteredPlatforms(results.slice(startIdx, endIdx));
+      } catch (error) {
+        console.error('Error loading platforms:', error);
+        
         toast({
-          title: "Search error",
-          description: "Using local data fallback",
+          title: "Database error",
+          description: "Failed to load platforms. Please initialize the database with the button at the bottom-right.",
           variant: "destructive",
         });
+        
+        setFilteredPlatforms([]);
+        setTotalPlatforms(0);
       } finally {
         setIsSearching(false);
       }
     };
     
     loadPlatforms();
-  }, [initialQuery, initialTag, currentPage, initialViewMode, useDatabase, toast]);
+  }, [initialQuery, initialTag, currentPage, initialViewMode, toast, platformsPerPage]);
   
   const handleSearch = async (searchQuery: string) => {
     setIsSearching(true);
@@ -163,33 +123,22 @@ const Directory = () => {
     setPage(1);
     
     try {
-      if (useDatabase) {
-        const results = await searchPlatformsDatabase(searchQuery);
-        setTotalPlatforms(results.length);
-        setFilteredPlatforms(results.slice(0, platformsPerPage));
-      } else {
-        const { platforms } = await import('@/utils/dummyData');
-        const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-        const results = searchLocalPlatforms(platforms, searchQuery);
-        const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-        setTotalPlatforms(results.length);
-        setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
-      }
+      const results = await searchPlatformsDatabase(searchQuery);
+      setTotalPlatforms(results.length);
+      setFilteredPlatforms(results.slice(0, platformsPerPage));
       
       setSearchParams({ q: searchQuery, page: '1' });
     } catch (error) {
       console.error('Search error:', error);
-      const { platforms } = await import('@/utils/dummyData');
-      const { searchPlatforms: searchLocalPlatforms } = await import('@/utils/dummyData');
-      const results = searchLocalPlatforms(platforms, searchQuery);
-      const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-      setFilteredPlatforms(enhancedResults);
       
       toast({
         title: "Search error",
-        description: "Using local search fallback",
+        description: "Failed to search platforms. Please check database connection.",
         variant: "destructive",
       });
+      
+      setFilteredPlatforms([]);
+      setTotalPlatforms(0);
     } finally {
       setIsSearching(false);
     }
@@ -201,24 +150,22 @@ const Directory = () => {
       setPage(1);
       
       try {
-        if (useDatabase) {
-          const data = await getPlatforms();
-          setTotalPlatforms(data.length || 0);
-          setFilteredPlatforms(data.slice(0, platformsPerPage));
-        } else {
-          const { platforms } = await import('@/utils/dummyData');
-          const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
-          setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
-          setTotalPlatforms(platforms.length);
-        }
+        const data = await getPlatforms();
+        setTotalPlatforms(data.length || 0);
+        setFilteredPlatforms(data.slice(0, platformsPerPage));
         
         setSearchParams({ page: '1' });
       } catch (error) {
         console.error('Error fetching platforms:', error);
-        const { platforms } = await import('@/utils/dummyData');
-        const enhancedResults = platforms.map(p => convertDummyPlatformToPlatform(p));
-        setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
-        setTotalPlatforms(platforms.length);
+        
+        toast({
+          title: "Database error",
+          description: "Failed to load platforms. Please check database connection.",
+          variant: "destructive",
+        });
+        
+        setFilteredPlatforms([]);
+        setTotalPlatforms(0);
       }
     } else {
       setSelectedTag(tag);
@@ -226,31 +173,22 @@ const Directory = () => {
       setPage(1);
       
       try {
-        if (useDatabase) {
-          const results = await getPlatformsByTag(tag);
-          setTotalPlatforms(results.length);
-          setFilteredPlatforms(results.slice(0, platformsPerPage));
-        } else {
-          const { filterPlatformsByTag } = await import('@/utils/dummyData');
-          const results = filterPlatformsByTag(tag);
-          const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-          setFilteredPlatforms(enhancedResults.slice(0, platformsPerPage));
-          setTotalPlatforms(results.length);
-        }
+        const results = await getPlatformsByTag(tag);
+        setTotalPlatforms(results.length);
+        setFilteredPlatforms(results.slice(0, platformsPerPage));
         
         setSearchParams({ tag, page: '1' });
       } catch (error) {
         console.error('Error filtering by tag:', error);
-        const { filterPlatformsByTag } = await import('@/utils/dummyData');
-        const results = filterPlatformsByTag(tag);
-        const enhancedResults = results.map(p => convertDummyPlatformToPlatform(p));
-        setFilteredPlatforms(enhancedResults);
         
         toast({
           title: "Tag filtering error",
-          description: "Using local data fallback",
+          description: "Failed to filter platforms by tag. Please check database connection.",
           variant: "destructive",
         });
+        
+        setFilteredPlatforms([]);
+        setTotalPlatforms(0);
       }
     }
   };
@@ -481,18 +419,10 @@ const Directory = () => {
                 setQuery('');
                 setSelectedTag('');
                 setPage(1);
-                if (useDatabase) {
-                  getPlatforms().then(data => {
-                    setTotalPlatforms(data.length);
-                    setFilteredPlatforms(data.slice(0, platformsPerPage));
-                  });
-                } else {
-                  import('@/utils/dummyData').then(({ platforms }) => {
-                    setFilteredPlatforms(platforms.slice(0, platformsPerPage));
-                    setTotalPlatforms(platforms.length);
-                  });
-                }
-                setSearchParams({});
+                getPlatforms().then(data => {
+                  setTotalPlatforms(data.length);
+                  setFilteredPlatforms(data.slice(0, platformsPerPage));
+                });
               }}
               className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
             >

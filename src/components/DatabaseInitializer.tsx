@@ -4,7 +4,90 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { migrateDataToSupabase } from '@/utils/supabaseClient';
 import { supabase } from '@/integrations/supabase/client';
-import { Platform, Review, convertDummyPlatformToPlatform, convertDummyReviewToReview } from '@/types/supabase';
+import { Platform, Review } from '@/types/supabase';
+
+// Sample data to initialize the database with
+const samplePlatforms: Platform[] = [
+  {
+    id: "openai",
+    name: "OpenAI",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/1280px-OpenAI_Logo.svg.png",
+    description: "OpenAI is an AI research and deployment company. Their mission is to ensure that artificial general intelligence benefits all of humanity. They provide various models like GPT-4 and DALL-E through their platform.",
+    shortDescription: "Cutting-edge language and image models for developers and businesses",
+    features: [
+      "Natural language processing",
+      "Image generation",
+      "Text completion",
+      "Code generation",
+      "Fine-tuning capabilities"
+    ],
+    tags: ["Language Models", "Image Generation", "API", "Enterprise", "GPT"],
+    pricing: {
+      hasFree: true,
+      paidPlans: [
+        {
+          name: "Pay as you go",
+          price: "$0.0005 / 1K tokens",
+          description: "Pay only for what you use"
+        }
+      ]
+    },
+    apiAvailable: true,
+    url: "https://openai.com",
+    rating: 4.8,
+    reviewCount: 0
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Anthropic_logo.svg/1280px-Anthropic_logo.svg.png",
+    description: "Anthropic is an AI safety company that develops reliable, interpretable, and steerable AI systems. They're the creators of Claude, an AI assistant designed to be helpful, harmless, and honest.",
+    shortDescription: "Creators of Claude, focused on AI safety and human values alignment",
+    features: [
+      "Conversational AI",
+      "Document analysis",
+      "Content generation",
+      "Summarization",
+      "Constitutional AI approach"
+    ],
+    tags: ["Language Models", "Safety", "API", "Enterprise", "Claude"],
+    pricing: {
+      hasFree: true,
+      paidPlans: [
+        {
+          name: "Pay as you go",
+          price: "$0.0003 / 1K tokens",
+          description: "Pay only for what you use"
+        }
+      ]
+    },
+    apiAvailable: true,
+    url: "https://anthropic.com",
+    rating: 4.7,
+    reviewCount: 0
+  }
+];
+
+const sampleReviews: Review[] = [
+  {
+    id: "r1",
+    platformId: "openai",
+    userName: "DevMaster",
+    rating: 5,
+    comment: "GPT-4 has been a game-changer for my business. The API is reliable and the documentation is excellent.",
+    date: "2023-12-15",
+    flagged: false
+  },
+  {
+    id: "r2",
+    platformId: "anthropic",
+    userName: "SafetyFirst",
+    rating: 5,
+    comment: "Claude is the most aligned and safe AI assistant I've used. Excellent for content that needs nuance.",
+    date: "2023-12-03",
+    flagged: false
+  }
+];
 
 const DatabaseInitializer = () => {
   const [isInitializing, setIsInitializing] = useState(false);
@@ -34,14 +117,7 @@ const DatabaseInitializer = () => {
     setIsInitializing(true);
     
     try {
-      // Import data only when button is clicked to avoid SSR issues
-      const { platforms: dummyPlatforms, reviews: dummyReviews } = await import('@/utils/dummyData');
-      
-      // Convert dummy data to the expected types
-      const platforms: Platform[] = dummyPlatforms.map(p => convertDummyPlatformToPlatform(p));
-      const reviews: Review[] = dummyReviews.map(r => convertDummyReviewToReview(r));
-      
-      const success = await migrateDataToSupabase(platforms, reviews);
+      const success = await migrateDataToSupabase(samplePlatforms, sampleReviews);
       
       if (success) {
         setIsInitialized(true);
