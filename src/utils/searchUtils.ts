@@ -114,31 +114,30 @@ export const searchPlatformsDatabase = async (query: string): Promise<Platform[]
     const searchQuery = query.trim().toLowerCase();
     
     let { data, error } = await supabase
-      .from('platforms')
-      .select('*')
-      .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
-      .order('rating', { ascending: false });
-    
-    if (error) {
-      console.error('Error searching platforms:', error);
-      throw error;
-    }
+    .rpc('search_platforms_by_tag', { search_tag: searchQuery }) // Call the SQL function
+    .order('rating', { ascending: false });
 
-    // If no direct matches, try more advanced search techniques
+  if (error) {
+    console.error('Error searching platforms by tags:', error);
+    throw error;
+  }
+
+    // If no tag matches, try searching by name and description
     if (!data || data.length === 0) {
-      // Try searching by tags
-      const { data: tagResults, error: tagError } = await supabase
+      // Try searching by name and description
+      const { data: textResults, error: textError } = await supabase
         .from('platforms')
         .select('*')
-        .contains('tags', [searchQuery])
+        .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
         .order('rating', { ascending: false });
       
-      if (tagError) {
-        console.error('Error searching platforms by tags:', tagError);
-      } else if (tagResults && tagResults.length > 0) {
-        data = tagResults;
+      if (textError) {
+        console.error('Error searching platforms by name/description:', textError);
+      } else if (textResults && textResults.length > 0) {
+        data = textResults;
       }
     }
+
 
     // Fallback to client-side search if no results from database
     if (!data || data.length === 0) {

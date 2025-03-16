@@ -11,7 +11,7 @@ import SubmitPlatform from "./pages/SubmitPlatform";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
-import DatabaseInitializer from "./components/DatabaseInitializer";
+// import DatabaseInitializer from "./components/DatabaseInitializer";
 import { AdminProvider } from "./contexts/AdminContext";
 
 const queryClient = new QueryClient();
@@ -32,7 +32,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <DatabaseInitializer />
+          {/* <DatabaseInitializer /> */}
         </AdminProvider>
       </BrowserRouter>
     </TooltipProvider>
