@@ -35,6 +35,45 @@ export const getPlatforms = async (): Promise<Platform[]> => {
   return updatedPlatforms;
 };
 
+// import { supabase } from "@/utils/supabaseClient"; // Ensure correct import
+// import { Platform } from "@/types/supabase";
+// import { convertDbPlatformToPlatform } from "@/utils/platformUtils";
+// import { calculatePlatformReviewData } from "@/utils/reviewService";
+
+export const getPlatformsByIds = async (ids: string[]): Promise<Platform[]> => {
+  if (ids.length === 0) return [];
+
+  // Fetch platforms from Supabase
+  const { data, error } = await supabase
+    .from("platforms")
+    .select("*")
+    .in("id", ids);
+
+  if (error) {
+    console.error("Error fetching platforms:", error);
+    return [];
+  }
+
+  // if (!data) return [];
+
+  // Convert data from DB format to frontend format
+  const platforms = data.map(convertDbPlatformToPlatform);
+
+  // // Fetch reviews for each platform
+  // const platformsWithReviews = await Promise.all(
+  //   platforms.map(async (platform) => {
+  //     const reviewData = await calculatePlatformReviewData(platform.id);
+  //     return {
+  //       ...platform,
+  //       rating: reviewData.averageRating,
+  //       reviewCount: reviewData.reviewCount,
+  //     };
+  //   })
+  // );
+
+  return platforms;
+};
+
 export const getPlatformById = async (id: string): Promise<Platform | null> => {
   const { data, error } = await supabase
     .from('platforms')

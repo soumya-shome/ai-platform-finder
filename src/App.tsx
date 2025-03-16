@@ -15,7 +15,8 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import { AdminProvider } from "./contexts/AdminContext";
 import { CompareProvider } from "./components/PlatformCompare";
-import DatabaseInitializer from "./components/DatabaseInitializer";
+import { Analytics } from "@vercel/analytics/react"
+// import DatabaseInitializer from "./components/DatabaseInitializer";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
+      <Analytics/>
       <Sonner />
       <BrowserRouter>
         <AdminProvider>
@@ -38,7 +40,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <DatabaseInitializer />
+            {/* <DatabaseInitializer /> */}
           </CompareProvider>
         </AdminProvider>
       </BrowserRouter>
