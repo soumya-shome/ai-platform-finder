@@ -5,7 +5,11 @@ import { Separator } from '@/components/ui/separator';
 
 const About = () => {
   return (
-    <Layout>
+    <Layout
+      title="About AI Platform Finder"
+      description="Learn about AI Platform Finder, our mission, and our commitment to helping you find the perfect AI tools and platforms for your needs."
+      keywords="about AI Platform Finder, AI platform comparison, AI tool directory, AI platform information"
+    >
       <div className="container py-12 max-w-4xl mx-auto animate-fade-in">
         <h1 className="text-4xl font-bold mb-2">About AI Platform Finder</h1>
         <Separator className="mb-8" />

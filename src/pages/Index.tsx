@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import PlatformCard from '@/components/PlatformCard';
 import TagBadge from '@/components/TagBadge';
-import {  getPlatforms } from '@/utils/supabaseClient';
+import { getPlatforms } from '@/utils/supabaseClient';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -30,12 +31,16 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout>
+    <Layout 
+      title="AI Platform Finder - Compare and Discover AI Tools"
+      description="Find the ideal AI solution based on your unique needs with our comprehensive platform directory and comparison tools."
+      keywords="AI platforms, artificial intelligence tools, AI comparison, machine learning, GPT, image generation, AI directory"
+    >
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950"></div>
         
         <div className="max-w-7xl mx-auto text-center">
-        <div className="animate-fade-in">
+          <div className="animate-fade-in">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
               Discover the Perfect
               <span className="text-primary ml-2">AI Platform</span>
