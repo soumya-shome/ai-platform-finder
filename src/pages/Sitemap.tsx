@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Link } from 'react-router-dom';
@@ -25,11 +24,31 @@ const Sitemap = () => {
         description="Browse all pages available on AI Platform Finder. Find the resources you need with our complete website sitemap."
         keywords="AI platform sitemap, website navigation, AI tools directory, site structure"
       />
+      {/* JSON-LD Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "url": "https://yourwebsite.com",
+          "name": "AI Platform Finder",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://yourwebsite.com/directory?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        })}
+      </script>
+
       <div className="container py-12 max-w-4xl mx-auto animate-fade-in">
+        {/* Breadcrumb Navigation for better SEO & UX */}
+        <nav className="text-sm mb-4">
+          <Link to="/" className="text-primary hover:underline">Home</Link> &gt; Sitemap
+        </nav>
+
         <h1 className="text-4xl font-bold mb-2">Sitemap</h1>
         <p className="text-muted-foreground mb-6">A complete map of all pages on our website</p>
         <Separator className="mb-8" />
-        
+
         <div className="grid gap-6">
           <Card>
             <CardContent className="pt-6">
@@ -46,7 +65,7 @@ const Sitemap = () => {
               </ul>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <h2 className="text-xl font-semibold mb-4">Dynamic Pages</h2>
