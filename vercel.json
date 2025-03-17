@@ -1,6 +1,8 @@
+
 {
-    "routes": [
-      { "src": "/[^.]+", "dest": "/", "status": 200 }
-    ]
-  }
-  
+  "routes": [
+    { "src": "/sitemap", "dest": "/sitemap.xml" },
+    { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
+    { "src": "/[^.]+", "dest": "/", "status": 200 }
+  ]
+}
