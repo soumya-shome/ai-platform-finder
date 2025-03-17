@@ -3,6 +3,7 @@ import React from 'react';
 import Navbar from './Navbar';
 import { useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import SEO from './SEO';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,15 +24,12 @@ const Layout: React.FC<LayoutProps> = ({
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Helmet>
-        <title>{fullTitle}</title>
-        <meta name="description" content={description} />
-        <meta name="keywords" content={keywords} />
-        <meta property="og:title" content={fullTitle} />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={canonicalUrl} />
-        <link rel="canonical" href={canonicalUrl} />
-      </Helmet>
+      <SEO
+        title={title}
+        description={description}
+        keywords={keywords}
+        canonicalUrl={canonicalUrl}
+      />
       
       <Navbar />
       <main className="flex-1 transition-all duration-300 animate-fade-in">
@@ -53,6 +51,9 @@ const Layout: React.FC<LayoutProps> = ({
             </Link>
             <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Terms
+            </Link>
+            <Link to="/sitemap" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Sitemap
             </Link>
           </div>
         </div>
