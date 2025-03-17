@@ -13,6 +13,9 @@ import EditPlatform from "./pages/EditPlatform";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import { AdminProvider } from "./contexts/AdminContext";
 import { CompareProvider } from "./components/PlatformCompare";
 import { Analytics } from "@vercel/analytics/react"
@@ -38,6 +41,9 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/edit-platform/:id" element={<EditPlatform />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             {/* <DatabaseInitializer /> */}

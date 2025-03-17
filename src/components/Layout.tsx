@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Navbar from './Navbar';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,19 +20,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} AI Discovery Platform
+              © {new Date().getFullYear()} AI Platform Finder
             </p>
           </div>
           <div className="flex space-x-6">
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               About
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacy
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Terms
-            </a>
+            </Link>
           </div>
         </div>
       </footer>
