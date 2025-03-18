@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import PlatformSubmissionForm from '@/components/PlatformSubmissionForm';
+import PlatformSubmissionForm from '@/components/platform-submission/PlatformSubmissionForm';
 
 const SubmitPlatform = () => {
   return (
