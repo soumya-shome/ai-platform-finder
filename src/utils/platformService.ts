@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Platform, 
@@ -205,16 +204,20 @@ export const updatePlatform = async (id: string, platformData: Platform): Promis
 
 // Function to approve a platform
 export const approvePlatform = async (id: string): Promise<boolean> => {
-  const { error } = await supabase
+  console.log(`Approving platform with ID: ${id}`);
+  
+  const { data, error } = await supabase
     .from('platforms')
     .update({ approved: true })
-    .eq('id', id);
+    .eq('id', id)
+    .select();
   
   if (error) {
     console.error('Error approving platform:', error);
     return false;
   }
   
+  console.log(`Platform approval result:`, data);
   return true;
 };
 

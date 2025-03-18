@@ -153,6 +153,7 @@ const AdminPage = () => {
           title: "Platform approved",
           description: "The platform has been approved and is now publicly visible.",
         });
+        // Refresh all platforms to accurately reflect the updated approval state
         await loadPlatforms();
       } else {
         toast({
