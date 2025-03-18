@@ -22,6 +22,7 @@ export interface Platform {
   reviewCount: number;
   apiAvailable: boolean;
   created_at?: string;
+  approved?: boolean; // New field for approval status
   // UI-specific fields
   shortDescription?: string;
 }
@@ -55,6 +56,7 @@ export interface DbPlatform {
   reviewcount: number;
   apiavailable: boolean;
   created_at?: string | null;
+  approved?: boolean; // New field for approval status
 }
 
 export interface DbReview {
@@ -81,7 +83,8 @@ export function convertDbPlatformToPlatform(dbPlatform: DbPlatform): Platform {
     rating: dbPlatform.rating,
     reviewCount: dbPlatform.reviewcount,
     apiAvailable: dbPlatform.apiavailable,
-    created_at: dbPlatform.created_at
+    created_at: dbPlatform.created_at,
+    approved: dbPlatform.approved
   };
 }
 
@@ -98,7 +101,8 @@ export function convertPlatformToDbPlatform(platform: Platform): DbPlatform {
     rating: platform.rating,
     reviewcount: platform.reviewCount,
     apiavailable: platform.apiAvailable,
-    created_at: platform.created_at
+    created_at: platform.created_at,
+    approved: platform.approved
   };
 }
 

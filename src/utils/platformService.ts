@@ -8,10 +8,17 @@ import {
 import { getReviewsByPlatformId } from './reviewService';
 
 // Platform-related database operations
-export const getPlatforms = async (): Promise<Platform[]> => {
-  const { data, error } = await supabase
+export const getPlatforms = async (includeUnapproved = false): Promise<Platform[]> => {
+  let query = supabase
     .from('platforms')
     .select('*');
+  
+  // Only include approved platforms unless specifically requested
+  if (!includeUnapproved) {
+    query = query.eq('approved', true);
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error('Error fetching platforms:', error);
@@ -35,11 +42,6 @@ export const getPlatforms = async (): Promise<Platform[]> => {
   return updatedPlatforms;
 };
 
-// import { supabase } from "@/utils/supabaseClient"; // Ensure correct import
-// import { Platform } from "@/types/supabase";
-// import { convertDbPlatformToPlatform } from "@/utils/platformUtils";
-// import { calculatePlatformReviewData } from "@/utils/reviewService";
-
 export const getPlatformsByIds = async (ids: string[]): Promise<Platform[]> => {
   if (ids.length === 0) return [];
 
@@ -47,29 +49,16 @@ export const getPlatformsByIds = async (ids: string[]): Promise<Platform[]> => {
   const { data, error } = await supabase
     .from("platforms")
     .select("*")
-    .in("id", ids);
+    .in("id", ids)
+    .eq('approved', true);
 
   if (error) {
     console.error("Error fetching platforms:", error);
     return [];
   }
 
-  // if (!data) return [];
-
   // Convert data from DB format to frontend format
   const platforms = data.map(convertDbPlatformToPlatform);
-
-  // // Fetch reviews for each platform
-  // const platformsWithReviews = await Promise.all(
-  //   platforms.map(async (platform) => {
-  //     const reviewData = await calculatePlatformReviewData(platform.id);
-  //     return {
-  //       ...platform,
-  //       rating: reviewData.averageRating,
-  //       reviewCount: reviewData.reviewCount,
-  //     };
-  //   })
-  // );
 
   return platforms;
 };
@@ -103,7 +92,8 @@ export const getPlatformsByTag = async (tag: string): Promise<Platform[]> => {
   const { data, error } = await supabase
     .from('platforms')
     .select('*')
-    .contains('tags', [tag]);
+    .contains('tags', [tag])
+    .eq('approved', true);
   
   if (error) {
     console.error(`Error fetching platforms with tag ${tag}:`, error);
@@ -145,6 +135,20 @@ export const getAllTags = async (): Promise<string[]> => {
   return Array.from(tagsSet);
 };
 
+export const getPredefinedTags = async (): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from('predefined_tags')
+    .select('name')
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching predefined tags:', error);
+    return [];
+  }
+  
+  return data ? data.map(tag => tag.name) : [];
+};
+
 export const addNewPlatform = async (platformData: Omit<Platform, 'id' | 'rating' | 'reviewCount'>): Promise<Platform | null> => {
   const newPlatform = {
     name: platformData.name,
@@ -156,7 +160,8 @@ export const addNewPlatform = async (platformData: Omit<Platform, 'id' | 'rating
     pricing: platformData.pricing,
     rating: 0,
     reviewcount: 0,
-    apiavailable: platformData.apiAvailable
+    apiavailable: platformData.apiAvailable,
+    approved: false // New platforms start as unapproved
   };
   
   const { data, error } = await supabase
@@ -196,6 +201,36 @@ export const updatePlatform = async (id: string, platformData: Platform): Promis
   }
   
   return true;
+};
+
+// Function to approve a platform
+export const approvePlatform = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('platforms')
+    .update({ approved: true })
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error approving platform:', error);
+    return false;
+  }
+  
+  return true;
+};
+
+// Function to delete a platform
+export const deletePlatform = async (id: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .rpc('delete_platform', {
+      platform_id: id
+    });
+  
+  if (error) {
+    console.error('Error deleting platform:', error);
+    return false;
+  }
+  
+  return data === true;
 };
 
 // Helper function to calculate platform rating and review count from reviews

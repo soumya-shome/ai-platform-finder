@@ -30,6 +30,7 @@ export type Database = {
       platforms: {
         Row: {
           apiavailable: boolean
+          approved: boolean
           created_at: string | null
           description: string
           features: string[]
@@ -44,6 +45,7 @@ export type Database = {
         }
         Insert: {
           apiavailable?: boolean
+          approved?: boolean
           created_at?: string | null
           description: string
           features?: string[]
@@ -58,6 +60,7 @@ export type Database = {
         }
         Update: {
           apiavailable?: boolean
+          approved?: boolean
           created_at?: string | null
           description?: string
           features?: string[]
@@ -69,6 +72,24 @@ export type Database = {
           reviewcount?: number
           tags?: string[]
           url?: string
+        }
+        Relationships: []
+      }
+      predefined_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -118,6 +139,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_platform: {
+        Args: {
+          platform_id: string
+        }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -128,6 +155,7 @@ export type Database = {
         }
         Returns: {
           apiavailable: boolean
+          approved: boolean
           created_at: string | null
           description: string
           features: string[]

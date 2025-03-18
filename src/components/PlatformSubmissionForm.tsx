@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +10,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
-import { addNewPlatform } from "@/utils/supabaseClient";
+import { Checkbox } from "./ui/checkbox";
+import { addNewPlatform } from "@/utils/platformService";
+import { getPredefinedTags } from "@/utils/platformService";
 
 // Define form validation schema
 const platformFormSchema = z.object({
@@ -18,7 +20,8 @@ const platformFormSchema = z.object({
   description: z.string().min(30, "Description must be at least 30 characters").max(1000, "Description cannot exceed 1000 characters"),
   logo: z.string().url("Please provide a valid URL").optional().or(z.literal('')),
   url: z.string().url("Please provide a valid URL"),
-  tags: z.string().min(3, "Please provide at least one tag"),
+  tags: z.array(z.string()).min(1, "Please select at least one tag"),
+  customTags: z.string().optional(),
   features: z.string().min(5, "Please provide at least one feature"),
   apiAvailable: z.boolean().default(false),
   pricing: z.object({
@@ -35,6 +38,16 @@ const PlatformSubmissionForm: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [predefinedTags, setPredefinedTags] = React.useState<string[]>([]);
+
+  useEffect(() => {
+    const loadTags = async () => {
+      const tags = await getPredefinedTags();
+      setPredefinedTags(tags);
+    };
+    
+    loadTags();
+  }, []);
 
   const form = useForm<PlatformFormValues>({
     resolver: zodResolver(platformFormSchema),
@@ -43,7 +56,8 @@ const PlatformSubmissionForm: React.FC = () => {
       description: "",
       logo: "",
       url: "",
-      tags: "",
+      tags: [],
+      customTags: "",
       features: "",
       apiAvailable: false,
       pricing: {
@@ -58,8 +72,14 @@ const PlatformSubmissionForm: React.FC = () => {
   const onSubmit = async (data: PlatformFormValues) => {
     setIsSubmitting(true);
     try {
-      // Format tags and features as arrays
-      const tagsArray = data.tags.split(',').map(tag => tag.trim());
+      // Combine selected tags and custom tags
+      const selectedTags = [...data.tags];
+      if (data.customTags) {
+        const customTagsArray = data.customTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+        selectedTags.push(...customTagsArray);
+      }
+      
+      // Format features as arrays
       const featuresArray = data.features.split('\n').filter(feature => feature.trim() !== '');
       
       // Create pricing object
@@ -76,7 +96,7 @@ const PlatformSubmissionForm: React.FC = () => {
         description: data.description,
         logo: data.logo || undefined,
         url: data.url,
-        tags: tagsArray,
+        tags: selectedTags,
         features: featuresArray,
         apiAvailable: data.apiAvailable,
         pricing
@@ -85,7 +105,7 @@ const PlatformSubmissionForm: React.FC = () => {
       if (newPlatform) {
         toast({
           title: "Platform submitted",
-          description: "Thank you for your contribution!",
+          description: "Thank you for your contribution! Your submission will be reviewed by an admin before appearing in the directory.",
         });
         form.reset();
         navigate('/directory');
@@ -181,17 +201,53 @@ const PlatformSubmissionForm: React.FC = () => {
             )}
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="tags"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel>Tags</FormLabel>
-                  <FormControl>
-                    <Input placeholder="productivity, automation, writing" {...field} />
-                  </FormControl>
-                  <FormDescription>Comma-separated tags that describe the platform</FormDescription>
+                  <div className="mb-4">
+                    <FormLabel className="text-base">Tags</FormLabel>
+                    <FormDescription>
+                      Select tags that best describe the platform
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {predefinedTags.map((tag) => (
+                      <FormField
+                        key={tag}
+                        control={form.control}
+                        name="tags"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={tag}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(tag)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, tag])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== tag
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {tag}
+                              </FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -199,24 +255,39 @@ const PlatformSubmissionForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="apiAvailable"
+              name="customTags"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-md border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel>API Available</FormLabel>
-                    <FormDescription>Does this platform offer an API?</FormDescription>
-                  </div>
+                <FormItem>
+                  <FormLabel>Custom Tags</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Input placeholder="custom, tags, comma, separated" {...field} />
                   </FormControl>
+                  <FormDescription>Add any additional tags not in the list above (comma separated)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+          
+          <FormField
+            control={form.control}
+            name="apiAvailable"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-md border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>API Available</FormLabel>
+                  <FormDescription>Does this platform offer an API?</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           <FormField
             control={form.control}
