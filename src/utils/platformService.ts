@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Platform, 
@@ -206,6 +207,7 @@ export const updatePlatform = async (id: string, platformData: Platform): Promis
 export const approvePlatform = async (id: string): Promise<boolean> => {
   console.log(`Approving platform with ID: ${id}`);
   
+  // Fix: Use correct column name 'approved' and ensure we're updating it properly
   const { data, error } = await supabase
     .from('platforms')
     .update({ approved: true })
@@ -218,7 +220,7 @@ export const approvePlatform = async (id: string): Promise<boolean> => {
   }
   
   console.log(`Platform approval result:`, data);
-  return true;
+  return data && data.length > 0;
 };
 
 // Function to delete a platform
